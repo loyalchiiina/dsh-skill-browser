@@ -1,0 +1,52 @@
+{
+  "name": "dsh-skill-browser",
+  "version": "1.5.2",
+  "description": "DSH 技能浏览器：悬浮球面板浏览共享技能库（分类/中文简介/搜索/失效台账/全文查看），含 DSH 设置页悬浮球显隐开关、技能库位置可配置（原生目录选择框）与技能失效台账自动登记（自动/人工分开显示）。Skill library browser panel with categories, Chinese descriptions, configurable skill root with native directory chooser and automatic skill-failure ledger.",
+  "type": "module",
+  "main": "lib/index.js",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/**/*.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "skill",
+    "技能",
+    "skills-browser",
+    "skill-browser",
+    "fluent",
+    "cfd",
+    "分类",
+    "category",
+    "chinese",
+    "中文简介"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-locale"
+      ],
+      "platform": "web"
+    }
+  }
+}
