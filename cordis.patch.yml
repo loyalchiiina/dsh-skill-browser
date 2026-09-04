@@ -1,0 +1,7 @@
+# dsh-skill-browser - browse the local skill library with categories & Chinese descriptions.
+# Host scans the user-configured skill root (settings page / folder picker /
+# ~/.dsh/skills) and serves the JSON API; client mounts the floating-ball
+# panel. id must equal the package name exactly.
+- insert:
+    - id: dsh-skill-browser
+      name: dsh-skill-browser
