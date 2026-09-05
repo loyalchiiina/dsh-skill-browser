@@ -15,6 +15,7 @@
   },
   "files": [
     "lib/**/*.js",
+    "lib/**/*.ps1",
     "cordis.patch.yml",
     "README.md",
     "LICENSE"
