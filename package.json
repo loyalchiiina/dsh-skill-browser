@@ -1,6 +1,6 @@
 {
   "name": "dsh-skill-browser",
-  "version": "1.5.5",
+  "version": "1.5.6",
   "description": "DSH 技能浏览器：悬浮球面板浏览共享技能库（分类/中文简介/搜索/失效台账/全文查看），含 DSH 设置页悬浮球显隐开关与一键恢复默认位置按钮、技能库位置可配置（原生目录选择框）与技能失效台账自动登记（自动/人工分开显示）；推荐插件位仅保留面板设置展开区一处。Skill library browser panel with categories, Chinese descriptions, configurable skill root with native directory chooser, one-click ball position reset and automatic skill-failure ledger.",
   "type": "module",
   "main": "lib/index.js",
