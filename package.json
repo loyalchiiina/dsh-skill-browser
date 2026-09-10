@@ -21,6 +21,8 @@
                   "LICENSE",
                   "lib/orb/*.html"
               ],
+    "homepage": "https://github.com/loyalchiiina/dsh-skill-browser",
+    "repository": { "type": "git", "url": "https://github.com/loyalchiiina/dsh-skill-browser.git" },
     "license":  "MIT",
     "keywords":  [
                      "dsh-plugin",
