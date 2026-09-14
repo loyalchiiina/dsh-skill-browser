@@ -20,6 +20,9 @@
 - **推荐插件**：仅面板 ⚙ 设置展开区（技能库位置下方）保留推荐位（照片显示器 dsh-chat-image-lightbox、字体插件 dsh-font-enhancer）；v1.5.3 起技能列表每页末尾与 DSH 设置页不再显示推荐（用户反馈心烦）
 - **DSH 设置页分区「悬浮球导航」**：在 DSH 设置中即可控制 🧩 技能球 / 🔤 字体球（若安装了字体插件）的显示与隐藏；v1.5.3 新增「🎯 一键恢复悬浮球默认位置（右下角）」按钮——悬浮球被拖出屏幕外卡住时点一下立即复位（清位置记忆/收起状态，无需重启）
 
+## 🎨 三球共享 128 皮肤
+与 dsh-todo-float-ball / dsh-font-enhancer 共享同一套 128 款皮肤目录（window.__DSH_BALL_SKINS，localStorage key dsh-ball-skin）。任一处切换，三个悬浮球与其展开面板实时同步；「原版（仅本球）」可让技能球单独回到原始星云紫。v1.8.x：全部面板控件（含技能详情正文、tab、开关、批量菜单）跟随皮肤，浅色主题文字对比度 WCAG 达标。
+
 ## 安装（desktop profile）
 
 1. 把本目录完整复制到 `~/.dsh/profiles/desktop/node_modules/dsh-skill-browser`（真实目录，不要 junction/link）
