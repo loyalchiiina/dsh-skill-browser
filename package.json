@@ -1,7 +1,7 @@
 {
     "name":  "dsh-skill-browser",
-    "version": "1.8.2",
-    "description":  "把技能库变成看得见、搜得到、管得住的资产：悬浮球面板浏览本机技能库（两级分类/中文简介/实时搜索/SKILL.md 全文查看），技能库位置可配置（原生目录选择框），附一键恢复悬浮球默认位置。独门功能「技能失效台账」监听 DSH 官方 tools/result 事件自动登记每次技能调用结果——成功记生效、失败记未生效并带错误信息。| Turn your skill library into something you can see, search and govern: a floating-ball panel with two-level categories, Chinese summaries taken from each SKILL.md, live search and full-text viewer. Signature feature: an automatic skill-failure ledger driven by the native tools/result event.",
+    "version": "1.8.3",
+    "description":  "把技能库变成看得见、搜得到、管得住的资产：分类/中文简介/搜索/全文查看，并自动登记每次技能调用的失效台账。| Browse and govern your skill library: categories, search, full-text viewer, plus an automatic skill-failure ledger driven by tools/result.",
     "type":  "module",
     "main":  "lib/index.js",
     "sideEffects":  false,
