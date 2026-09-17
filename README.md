@@ -1,8 +1,25 @@
 # dsh-skill-browser 🧩
 
-**DSH 技能浏览器** — 在 DeepSeek Harness（DSH）桌面端/网页端里直接浏览本机技能库，并自动登记技能失效台账。
+**把技能库变成看得见、搜得到、管得住的资产。**
 
-一个悬浮球入口，点开即见：技能目录、两级分类浏览、实时搜索、SKILL.md 全文查看；内置「失效台账」页，自动记录每次技能调用的结果。
+**Turn your skill library into something you can see, search, and govern.**
+
+在 DeepSeek Harness（DSH）桌面端 / 网页端里直接浏览本机技能库，并**自动登记技能失效台账**。一个悬浮球入口，点开即见：技能目录、两级分类浏览、实时搜索、SKILL.md 全文查看；内置「失效台账」页，自动记录每次技能调用的结果。
+
+Browse your local DSH skill library straight from the GUI, with an **automatic skill-failure ledger**. One floating-ball entry point opens a wall of skill cards — categories, live search, full SKILL.md viewer — plus a ledger page that logs the outcome of every `skill` tool call.
+
+![技能浏览器面板](docs/images/skill-browser-panel.png)
+
+> 技能浏览页：顶部技能总数与生成时间，搜索框 + 「全部技能 / 停用」开关，分类标签一行排开，主体是技能卡片墙（技能名 / 中文简介 / 分类 / 修改时间 / 开关）。
+> Browse view: skill count, search box, category chips, and a wall of skill cards.
+
+### 独门功能：技能失效台账 · Signature feature: the failure ledger
+
+技能调用了，可到底生效没有？插件监听 DSH 官方 `tools/result` 事件，**自动登记每一次 skill 工具调用结果**——成功记「生效 ✅」，加载失败记「未生效 ❌」并带上错误信息。人工台账与自动登记分开显示，人工维护区**插件永不改动**。
+
+Did that skill actually work? The plugin listens to DSH's native `tools/result` event and **automatically logs every `skill` tool call** — successes "effective ✅", load failures "ineffective ❌" with the error. The manual ledger and the automatic log display separately, and the plugin never touches your manually maintained section.
+
+---
 
 ## 功能
 
@@ -22,6 +39,19 @@
 
 ## 🎨 三球共享 128 皮肤
 与 dsh-todo-float-ball / dsh-font-enhancer 共享同一套 128 款皮肤目录（window.__DSH_BALL_SKINS，localStorage key dsh-ball-skin）。任一处切换，三个悬浮球与其展开面板实时同步；「原版（仅本球）」可让技能球单独回到原始星云紫。v1.8.x：全部面板控件（含技能详情正文、tab、开关、批量菜单）跟随皮肤，浅色主题文字对比度 WCAG 达标。
+
+## Highlights (English)
+
+- 🧩 **Floating-ball entry** — pinned to a screen corner, click to toggle the panel; draggable with position memory, Alt+click to collapse to a dot.
+- 📂 **Configurable skill root** — pick the folder via the native directory chooser in ⚙ settings, or paste a path; auto-detects the official `~/.dsh/skills` root when unset. **No hard-coded paths shipped.**
+- 📚 **Two-level categories** — auto-classified from skill directory names (16 top-level categories: Fluent/CFD simulation, DSH toolchain, multi-client collaboration, Excel/spreadsheets, document processing, image/vision, voice/media, data/visualisation, dev/skill governance…).
+- 🇨🇳 **Chinese summaries** — taken straight from each skill's `SKILL.md` frontmatter `description`. Since v1.5.0 the plugin ships **no built-in skill dictionary**, so you always see an accurate description of *your own* library.
+- 🔍 **Live search** — filter by skill name, Chinese summary, or raw description.
+- 📄 **Full-text viewer** — click a card for the complete `SKILL.md`, with one-click copy.
+- 🤖 **Automatic failure ledger** — driven by the native `tools/result` event; manual and automatic records shown separately, manual content never modified.
+- 📋 **Ledger auto-discovery** — scans the whole library for an existing ledger (filename keywords, with `skill-master/references/` preferred) and reuses it; creates a default one only if absent. Idempotent, never overwrites manual content.
+- ⚙️ **Settings integration** — toggle the skill 🧩 / font 🔤 balls from DSH settings, plus a **🎯 reset-to-default-position** button that un-sticks a ball dragged off-screen (no restart needed).
+- 🎨 **128 shared ball skins** — synced live with `dsh-todo-float-ball` and `dsh-font-enhancer`; all panel controls are themed with WCAG-compliant contrast in light themes.
 
 ## 安装（desktop profile）
 
