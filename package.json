@@ -19,8 +19,9 @@
                   "cordis.patch.yml",
                   "README.md",
                   "LICENSE",
-                  "lib/orb/*.html"
-              ],
+                  "lib/orb/*.html",
+                  "docs/images/**"
+                ],
     "license":  "MIT",
   "repository": {
     "type": "git",
