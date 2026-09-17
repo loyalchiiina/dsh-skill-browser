@@ -1,3 +1,8 @@
 node_modules/
 *.tgz
-*.zip
+
+# 开发/调试杂物（2026-09-17 补）
+*.bak
+*.bak-*
+_resume/
+__pycache__/

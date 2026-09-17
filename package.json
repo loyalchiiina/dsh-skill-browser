@@ -1,7 +1,7 @@
 {
     "name":  "dsh-skill-browser",
-    "version": "1.8.3",
-    "description":  "把技能库变成看得见、搜得到、管得住的资产：分类/中文简介/搜索/全文查看，并自动登记每次技能调用的失效台账。| Browse and govern your skill library: categories, search, full-text viewer, plus an automatic skill-failure ledger driven by tools/result.",
+    "version":  "1.6.2",
+    "description":  "DSH 技能浏览器：悬浮球面板浏览共享技能库（分类/中文简介/搜索/失效台账/全文查看），含 DSH 设置页悬浮球显隐开关与一键恢复默认位置按钮、技能库位置可配置（原生目录选择框）与技能失效台账自动登记（自动/人工分开显示）；推荐插件位仅保留面板设置展开区一处。Skill library browser panel with categories, Chinese descriptions, configurable skill root with native directory chooser, one-click ball position reset and automatic skill-failure ledger.",
     "type":  "module",
     "main":  "lib/index.js",
     "sideEffects":  false,
@@ -19,15 +19,9 @@
                   "cordis.patch.yml",
                   "README.md",
                   "LICENSE",
-                  "lib/orb/*.html",
-                  "docs/images/**"
-                ],
+                  "lib/orb/*.html"
+              ],
     "license":  "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/loyalchiiina/dsh-skill-browser.git"
-  },
-  "homepage": "https://github.com/loyalchiiina/dsh-skill-browser#readme",
     "keywords":  [
                      "dsh-plugin",
                      "deepseek-harness",
