@@ -4,6 +4,43 @@
 
 一个悬浮球入口，点开即见：技能目录、两级分类浏览、实时搜索、SKILL.md 全文查看；内置「失效台账」页，自动记录每次技能调用的结果。
 
+## 功能总览 · At a glance（中英对照 / Bilingual）
+
+### 浏览与分类 · Browsing & categories
+
+| 中文 | English |
+|---|---|
+| 悬浮球 🧩 入口：点击开/关面板，可拖拽换位（位置记忆），Alt+点击收成小圆点 | Floating 🧩 ball entry: click to toggle the panel, draggable with remembered position, Alt+click collapses to a dot |
+| 一级/二级分类：16 个一级分类 + Fluent/DSH 域二级分类，按目录名前缀自动归类 | Two-level categories: 16 top-level groups plus Fluent/DSH sub-groups, auto-derived from directory-name patterns |
+| 中文简介直接取自各技能 SKILL.md frontmatter 的 description（不内置任何技能名清单） | Chinese descriptions read straight from each SKILL.md frontmatter — no built-in skill-name list |
+| 实时搜索：技能名 / 中文简介 / 原始描述 | Realtime search over name / Chinese summary / raw description |
+| 详情查看：点击卡片看 SKILL.md 全文，一键复制 | Detail view: open the full SKILL.md, copy with one click |
+
+### 失效台账 · Failure ledger
+
+| 中文 | English |
+|---|---|
+| 🤖 自动登记：监听官方 `tools/result` 事件记录每次 skill 调用——成功「生效✅」、失败「未生效❌」（含错误信息） | 🤖 Automatic: listens to the official `tools/result` event — success ✅ / failure ❌ with error text |
+| 👤 人工台账：解析台账 md 的统计表与失败明细，人工维护区插件永不改动 | 👤 Manual ledger: parsed from the markdown stats table & failure detail — plugin never edits human content |
+| 登记口令：对话里对 AI 说「触发失败，登记」即可写入台账 | Voice command: just tell the AI "触发失败，登记" to log a failure |
+| 台账智能发现：全库搜索既有台账，搜到即复用，没有才创建默认台账 + skill-master 骨架（幂等，不覆盖人工内容） | Smart discovery: reuses an existing ledger across the library, creates a default template only if none exists (idempotent, never overwrites human content) |
+
+### 配置与设置 · Config & settings
+
+| 中文 | English |
+|---|---|
+| 技能库位置自己定：⚙ 设置里选文件夹（弹系统目录选择框）或手动粘贴路径；未配置自动探测 `~/.dsh/skills`；零预设路径 | Configurable skill root: system folder picker or manual path; auto-detects `~/.dsh/skills` when unset — zero hardcoded paths |
+| DSH 设置页分区「悬浮球导航」：控制 🧩 技能球 / 🔤 字体球显示与隐藏 | DSH settings section "悬浮球导航": show/hide the 🧩 skill ball and 🔤 font ball |
+| 🎯 一键恢复默认位置（右下角）：拖出屏幕外卡住时立即复位，双球联动 | 🎯 One-click restore default position (bottom-right): rescues a ball dragged off-screen, dual-ball aware |
+
+### API 与隐私 · API & privacy
+
+| 中文 | English |
+|---|---|
+| 宿主端纯回环路由：health / config / skills / skill / ledger / pick-dir 等 | Host-side loopback-only routes: health / config / skills / skill / ledger / pick-dir etc. |
+| 写盘节流：队列满 5 条或 60 秒批量落盘，不阻塞工具调用 | Batched writes: queue of 5 or 60s flush, never blocks tool calls |
+| 零数据上传，仅本机回环访问 | Zero data upload — loopback only |
+
 ## 功能
 
 - **悬浮球 🧩**：固定在屏幕角落，点击开关面板；可拖拽换位置（位置记忆），Alt+点击收起成小圆点
