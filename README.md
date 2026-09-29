@@ -1,45 +1,25 @@
 # dsh-skill-browser 🧩
 
-**DSH 技能浏览器** — 在 DeepSeek Harness（DSH）桌面端/网页端里直接浏览本机技能库，并自动登记技能失效台账。
+**把技能库变成看得见、搜得到、管得住的资产。**
 
-一个悬浮球入口，点开即见：技能目录、两级分类浏览、实时搜索、SKILL.md 全文查看；内置「失效台账」页，自动记录每次技能调用的结果。
+**Turn your skill library into something you can see, search, and govern.**
 
-## 功能总览 · At a glance（中英对照 / Bilingual）
+在 DeepSeek Harness（DSH）桌面端 / 网页端里直接浏览本机技能库，并**自动登记技能失效台账**。一个悬浮球入口，点开即见：技能目录、两级分类浏览、实时搜索、SKILL.md 全文查看；内置「失效台账」页，自动记录每次技能调用的结果。
 
-### 浏览与分类 · Browsing & categories
+Browse your local DSH skill library straight from the GUI, with an **automatic skill-failure ledger**. One floating-ball entry point opens a wall of skill cards — categories, live search, full SKILL.md viewer — plus a ledger page that logs the outcome of every `skill` tool call.
 
-| 中文 | English |
-|---|---|
-| 悬浮球 🧩 入口：点击开/关面板，可拖拽换位（位置记忆），Alt+点击收成小圆点 | Floating 🧩 ball entry: click to toggle the panel, draggable with remembered position, Alt+click collapses to a dot |
-| 一级/二级分类：16 个一级分类 + Fluent/DSH 域二级分类，按目录名前缀自动归类 | Two-level categories: 16 top-level groups plus Fluent/DSH sub-groups, auto-derived from directory-name patterns |
-| 中文简介直接取自各技能 SKILL.md frontmatter 的 description（不内置任何技能名清单） | Chinese descriptions read straight from each SKILL.md frontmatter — no built-in skill-name list |
-| 实时搜索：技能名 / 中文简介 / 原始描述 | Realtime search over name / Chinese summary / raw description |
-| 详情查看：点击卡片看 SKILL.md 全文，一键复制 | Detail view: open the full SKILL.md, copy with one click |
+![技能浏览器面板](docs/images/skill-browser-panel.png)
 
-### 失效台账 · Failure ledger
+> 技能浏览页：顶部技能总数与生成时间，搜索框 + 「全部技能 / 停用」开关，分类标签一行排开，主体是技能卡片墙（技能名 / 中文简介 / 分类 / 修改时间 / 开关）。
+> Browse view: skill count, search box, category chips, and a wall of skill cards.
 
-| 中文 | English |
-|---|---|
-| 🤖 自动登记：监听官方 `tools/result` 事件记录每次 skill 调用——成功「生效✅」、失败「未生效❌」（含错误信息） | 🤖 Automatic: listens to the official `tools/result` event — success ✅ / failure ❌ with error text |
-| 👤 人工台账：解析台账 md 的统计表与失败明细，人工维护区插件永不改动 | 👤 Manual ledger: parsed from the markdown stats table & failure detail — plugin never edits human content |
-| 登记口令：对话里对 AI 说「触发失败，登记」即可写入台账 | Voice command: just tell the AI "触发失败，登记" to log a failure |
-| 台账智能发现：全库搜索既有台账，搜到即复用，没有才创建默认台账 + skill-master 骨架（幂等，不覆盖人工内容） | Smart discovery: reuses an existing ledger across the library, creates a default template only if none exists (idempotent, never overwrites human content) |
+### 独门功能：技能失效台账 · Signature feature: the failure ledger
 
-### 配置与设置 · Config & settings
+技能调用了，可到底生效没有？插件监听 DSH 官方 `tools/result` 事件，**自动登记每一次 skill 工具调用结果**——成功记「生效 ✅」，加载失败记「未生效 ❌」并带上错误信息。人工台账与自动登记分开显示，人工维护区**插件永不改动**。
 
-| 中文 | English |
-|---|---|
-| 技能库位置自己定：⚙ 设置里选文件夹（弹系统目录选择框）或手动粘贴路径；未配置自动探测 `~/.dsh/skills`；零预设路径 | Configurable skill root: system folder picker or manual path; auto-detects `~/.dsh/skills` when unset — zero hardcoded paths |
-| DSH 设置页分区「悬浮球导航」：控制 🧩 技能球 / 🔤 字体球显示与隐藏 | DSH settings section "悬浮球导航": show/hide the 🧩 skill ball and 🔤 font ball |
-| 🎯 一键恢复默认位置（右下角）：拖出屏幕外卡住时立即复位，双球联动 | 🎯 One-click restore default position (bottom-right): rescues a ball dragged off-screen, dual-ball aware |
+Did that skill actually work? The plugin listens to DSH's native `tools/result` event and **automatically logs every `skill` tool call** — successes "effective ✅", load failures "ineffective ❌" with the error. The manual ledger and the automatic log display separately, and the plugin never touches your manually maintained section.
 
-### API 与隐私 · API & privacy
-
-| 中文 | English |
-|---|---|
-| 宿主端纯回环路由：health / config / skills / skill / ledger / pick-dir 等 | Host-side loopback-only routes: health / config / skills / skill / ledger / pick-dir etc. |
-| 写盘节流：队列满 5 条或 60 秒批量落盘，不阻塞工具调用 | Batched writes: queue of 5 or 60s flush, never blocks tool calls |
-| 零数据上传，仅本机回环访问 | Zero data upload — loopback only |
+---
 
 ## 功能
 
@@ -56,6 +36,22 @@
 - **台账智能发现**：初始化时全库搜索台账文件（文件名含「失效台账 / 失败台账 / 生效-失效」等关键词，约定路径 `skill-master/references/` 优先）；搜到就复用，没搜到才创建默认台账 + `skill-master` 技能骨架（幂等，已有人工内容绝不覆盖）
 - **推荐插件**：仅面板 ⚙ 设置展开区（技能库位置下方）保留推荐位（照片显示器 dsh-chat-image-lightbox、字体插件 dsh-font-enhancer）；v1.5.3 起技能列表每页末尾与 DSH 设置页不再显示推荐（用户反馈心烦）
 - **DSH 设置页分区「悬浮球导航」**：在 DSH 设置中即可控制 🧩 技能球 / 🔤 字体球（若安装了字体插件）的显示与隐藏；v1.5.3 新增「🎯 一键恢复悬浮球默认位置（右下角）」按钮——悬浮球被拖出屏幕外卡住时点一下立即复位（清位置记忆/收起状态，无需重启）
+
+## 🎨 三球共享 128 皮肤
+与 dsh-todo-float-ball / dsh-font-enhancer 共享同一套 128 款皮肤目录（window.__DSH_BALL_SKINS，localStorage key dsh-ball-skin）。任一处切换，三个悬浮球与其展开面板实时同步；「原版（仅本球）」可让技能球单独回到原始星云紫。v1.8.x：全部面板控件（含技能详情正文、tab、开关、批量菜单）跟随皮肤，浅色主题文字对比度 WCAG 达标。
+
+## Highlights (English)
+
+- 🧩 **Floating-ball entry** — pinned to a screen corner, click to toggle the panel; draggable with position memory, Alt+click to collapse to a dot.
+- 📂 **Configurable skill root** — pick the folder via the native directory chooser in ⚙ settings, or paste a path; auto-detects the official `~/.dsh/skills` root when unset. **No hard-coded paths shipped.**
+- 📚 **Two-level categories** — auto-classified from skill directory names (16 top-level categories: Fluent/CFD simulation, DSH toolchain, multi-client collaboration, Excel/spreadsheets, document processing, image/vision, voice/media, data/visualisation, dev/skill governance…).
+- 🇨🇳 **Chinese summaries** — taken straight from each skill's `SKILL.md` frontmatter `description`. Since v1.5.0 the plugin ships **no built-in skill dictionary**, so you always see an accurate description of *your own* library.
+- 🔍 **Live search** — filter by skill name, Chinese summary, or raw description.
+- 📄 **Full-text viewer** — click a card for the complete `SKILL.md`, with one-click copy.
+- 🤖 **Automatic failure ledger** — driven by the native `tools/result` event; manual and automatic records shown separately, manual content never modified.
+- 📋 **Ledger auto-discovery** — scans the whole library for an existing ledger (filename keywords, with `skill-master/references/` preferred) and reuses it; creates a default one only if absent. Idempotent, never overwrites manual content.
+- ⚙️ **Settings integration** — toggle the skill 🧩 / font 🔤 balls from DSH settings, plus a **🎯 reset-to-default-position** button that un-sticks a ball dragged off-screen (no restart needed).
+- 🎨 **128 shared ball skins** — synced live with `dsh-todo-float-ball` and `dsh-font-enhancer`; all panel controls are themed with WCAG-compliant contrast in light themes.
 
 ## 安装（desktop profile）
 
