@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Skill Browser",
-    "description": "Browse, search and inspect the local skill library, with per-skill detail pages and quick routing."
+    "description": "Open a floating-ball panel to browse, search and inspect your local skill library with one/two-level categories and full SKILL.md viewer; enable or disable skills per card, per category or library-wide with automatic backups; auto-log every skill call in a failure ledger. Configurable skill root (native directory chooser), draggable ball with one-click reset."
   }
 }

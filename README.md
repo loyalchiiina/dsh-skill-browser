@@ -10,7 +10,7 @@ Browse your local DSH skill library straight from the GUI, with an **automatic s
 
 ![技能浏览器面板](docs/images/skill-browser-panel.png)
 
-> 技能浏览页：顶部技能总数与生成时间，搜索框 + 「全部技能 / 停用」开关，分类标签一行排开，主体是技能卡片墙（技能名 / 中文简介 / 分类 / 修改时间 / 开关）。
+> 技能浏览页：顶部技能总数与生成时间，搜索框 + 「全部技能」聚合启停滑块（可一键全启用 / 全停用，或点开批量选择），分类标签一行排开，主体是技能卡片墙（技能名 / 中文简介 / 分类 / 修改时间 / 开关）。
 > Browse view: skill count, search box, category chips, and a wall of skill cards.
 
 ### 独门功能：技能失效台账 · Signature feature: the failure ledger
@@ -25,7 +25,8 @@ Did that skill actually work? The plugin listens to DSH's native `tools/result` 
 
 - **悬浮球 🧩**：固定在屏幕角落，点击开关面板；可拖拽换位置（位置记忆），Alt+点击收起成小圆点
 - **技能库位置自己定**：首次使用在面板 ⚙ 设置里选择技能库文件夹（弹系统目录选择框），或手动粘贴路径；未配置时自动探测官方默认根 `~/.dsh/skills`。**插件不含任何预设路径**
-- **一级/二级分类**：按技能目录名模式自动归类（Fluent/CFD 仿真、DSH 工具链、多端协同、Excel/表格、文档处理、图片/视觉、语音/媒体、数据/可视化、开发/技能治理等 16 个一级分类与 Fluent/DSH 域二级分类）
+- **一级/二级分类**：按技能目录名模式自动归类（Fluent/CFD 仿真、DSH 工具链、多端协同、Excel/表格、文档处理、图片/视觉、语音/媒体、数据/可视化、开发/技能治理等 15 个一级分类与 Fluent/DSH 域二级分类）
+- **技能启停**（v1.7.0 起）：单个技能卡片开关 / 分类级聚合滑块 / 全库批量启停（带确认菜单）。停用即改写该技能 `SKILL.md` frontmatter 的 `disable-model-invocation`，改写前自动备份为 `.bak-toggle`，停用卡灰显并带徽章；随时可一键恢复
 - **中文简介**：技能简介直接取自各技能 SKILL.md frontmatter 的 description（v1.5.0 起插件不内置任何技能名清单/字典，避免泄漏技能库构成，也保证所有人看到的是自己技能库的准确描述）
 - **搜索**：按技能名 / 中文简介 / 原始描述实时过滤
 - **详情**：点击卡片查看 SKILL.md 全文，可一键复制
@@ -34,8 +35,8 @@ Did that skill actually work? The plugin listens to DSH's native `tools/result` 
   - **🤖 自动登记**：插件监听 DSH 官方 `tools/result` 事件，自动记录每次 `skill` 工具调用结果——成功记「生效✅」、加载失败记「未生效❌」（含错误信息）
   - **登记口令**：技能触发失败时，在对话里对 AI 说「触发失败，登记」或「登记失败：技能名 原因」，AI 调用上报接口写入台账
 - **台账智能发现**：初始化时全库搜索台账文件（文件名含「失效台账 / 失败台账 / 生效-失效」等关键词，约定路径 `skill-master/references/` 优先）；搜到就复用，没搜到才创建默认台账 + `skill-master` 技能骨架（幂等，已有人工内容绝不覆盖）
-- **推荐插件**：仅面板 ⚙ 设置展开区（技能库位置下方）保留推荐位（照片显示器 dsh-chat-image-lightbox、字体插件 dsh-font-enhancer）；v1.5.3 起技能列表每页末尾与 DSH 设置页不再显示推荐（用户反馈心烦）
-- **DSH 设置页分区「悬浮球导航」**：在 DSH 设置中即可控制 🧩 技能球 / 🔤 字体球（若安装了字体插件）的显示与隐藏；v1.5.3 新增「🎯 一键恢复悬浮球默认位置（右下角）」按钮——悬浮球被拖出屏幕外卡住时点一下立即复位（清位置记忆/收起状态，无需重启）
+- **推荐插件**：面板 ⚙ 设置展开区（技能库位置下方）保留 3 张推荐卡（照片显示器 dsh-chat-image-lightbox、字体插件 dsh-font-enhancer、Todo 悬浮球 dsh-todo-float-ball）；DSH 设置页有 4 条推荐记录；v1.5.3 起技能列表每页末尾不再显示推荐（用户反馈心烦）
+- **DSH 设置页分区「悬浮球导航」**：在 DSH 设置中即可控制 🧩 技能球 / 🔤 字体球（若安装了字体插件）/ 📋 Todo 悬浮球（若安装了 todo 插件）的显示与隐藏；v1.5.3 新增「🎯 一键恢复悬浮球默认位置（右下角）」按钮——悬浮球被拖出屏幕外卡住时点一下立即复位（清位置记忆/收起状态，无需重启）
 
 ## 🎨 三球共享 128 皮肤
 与 dsh-todo-float-ball / dsh-font-enhancer 共享同一套 128 款皮肤目录（window.__DSH_BALL_SKINS，localStorage key dsh-ball-skin）。任一处切换，三个悬浮球与其展开面板实时同步；「原版（仅本球）」可让技能球单独回到原始星云紫。v1.8.x：全部面板控件（含技能详情正文、tab、开关、批量菜单）跟随皮肤，浅色主题文字对比度 WCAG 达标。
@@ -44,7 +45,8 @@ Did that skill actually work? The plugin listens to DSH's native `tools/result` 
 
 - 🧩 **Floating-ball entry** — pinned to a screen corner, click to toggle the panel; draggable with position memory, Alt+click to collapse to a dot.
 - 📂 **Configurable skill root** — pick the folder via the native directory chooser in ⚙ settings, or paste a path; auto-detects the official `~/.dsh/skills` root when unset. **No hard-coded paths shipped.**
-- 📚 **Two-level categories** — auto-classified from skill directory names (16 top-level categories: Fluent/CFD simulation, DSH toolchain, multi-client collaboration, Excel/spreadsheets, document processing, image/vision, voice/media, data/visualisation, dev/skill governance…).
+- 📚 **Two-level categories** — auto-classified from skill directory names (15 top-level categories: Fluent/CFD simulation, DSH toolchain, multi-client collaboration, Excel/spreadsheets, document processing, image/vision, voice/media, data/visualisation, dev/skill governance…).
+- 🔘 **Skill enable/disable** (since v1.7.0) — per-card switch, category-level aggregate slider, and whole-library batch toggle with a confirmation menu. Disabling rewrites the skill's `SKILL.md` frontmatter `disable-model-invocation` after backing it up to `.bak-toggle`; disabled cards grey out with a badge and can be restored at any time.
 - 🇨🇳 **Chinese summaries** — taken straight from each skill's `SKILL.md` frontmatter `description`. Since v1.5.0 the plugin ships **no built-in skill dictionary**, so you always see an accurate description of *your own* library.
 - 🔍 **Live search** — filter by skill name, Chinese summary, or raw description.
 - 📄 **Full-text viewer** — click a card for the complete `SKILL.md`, with one-click copy.
@@ -94,6 +96,10 @@ DSH 桌面端内置**供应链安全策略**（minimumReleaseAge）：刚发布�
 | `POST /dsh-skill-browser/ledger/flush` | 立即落盘队列中的登记 |
 | `GET /dsh-skill-browser/ledger-detail?skill=<name>` | 该技能的人工明细 + 全部自动记录 |
 | `POST /dsh-skill-browser/pick-dir` | 弹系统目录选择框（Windows） |
+| `POST /dsh-skill-browser/toggle` | 单技能启停 `{ dir, enabled }`（改写 SKILL.md frontmatter，自动备份 `.bak-toggle`） |
+| `POST /dsh-skill-browser/toggle-batch` | 批量启停 `{ dirs: [...], enabled }`（分类级聚合滑块与全库批量走这里） |
+| `GET/POST /dsh-skill-browser/diag` | 诊断信息（扫描耗时、缓存状态、最近错误） |
+| `GET /dsh-skill-browser/orb/<orb-*.html>` | 悬浮球静态资源（皮肤精灵图等） |
 
 技能根目录解析顺序：设置页覆盖（`~/.dsh/data/dsh-skill-browser/config.json`）→ 环境变量 `DSH_SKILLS_DIR` → 插件 config `skillsDir` → `~/.dsh/skills`（官方默认根）。全部未命中时面板提示选择目录。
 
