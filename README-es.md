@@ -1,6 +1,6 @@
 # Skill Browser
 
-> Browse, search and inspect the local skill library, with per-skill detail pages and quick routing.
+> Panel de bola flotante que convierte tu biblioteca de skills local en un activo navegable, buscable y gobernable: categorías de uno/dos niveles más grupos personalizados (vistas de árbol y plana, grupos manuales, agrupación instantánea por palabras clave, agrupación automática con IA y portadas generadas por IA — agrupar solo cambia la vista y nunca mueve archivos de skills), insignias de versión por skill con reserva "aún sin versión", habilitar/deshabilitar por tarjeta / por categoría / toda la biblioteca con copias de seguridad automáticas, y visor completo de SKILL.md. Un panel de libro de llamadas añade rangos de fechas, granularidad día/semana/mes/año, clasificaciones, gráfico de tendencia y detalles de fallos, alimentado automáticamente por el evento nativo tools/result. Recarga en caliente con un clic, 128 skins adaptables al contraste, raíz de skills configurable y bola arrastrable y restaurable.
 
 > Full documentation: [English README](./README.md)
 

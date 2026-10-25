@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Skill Browser",
-    "description": "Open a floating-ball panel to browse, search and inspect your local skill library with one/two-level categories and full SKILL.md viewer; enable or disable skills per card, per category or library-wide with automatic backups; auto-log every skill call in a failure ledger. Configurable skill root (native directory chooser), draggable ball with one-click reset."
+    "description": "One floating ball opens a panel that turns your local skill library into something you can browse, search and govern: one/two-level categories plus custom groups (tree/flat views, manual groups, instant keyword grouping, AI auto-grouping with AI covers — grouping is view-only and never moves skill files), per-skill version badges with a \"no version yet\" fallback, per-card / per-category / library-wide enable-disable with automatic backups, and a full SKILL.md viewer. A call-ledger dashboard adds date ranges, day/week/month/year granularity, rankings, trend chart and failure details, fed automatically by the host's tools/result event. One-click hot reload, all 128 ball skins contrast-adaptive, configurable skill root, draggable and resettable ball."
   }
 }

@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.9.10 — 2026-10-25
+
+### 修复
+- **品牌渐变底文字对比度按「最差端点」判色**：原来用渐变中点算白字对比度，但 `linear-gradient` 实际铺满 g1..g2 整条 ramp，浅色皮肤（04 全息幻彩 / 051 / 113–127 等）的中点达标而浅端只有 3.7–4.4:1。现改为 `worst(ink, g1, g2) = min(cr(ink,g1), cr(ink,g2))`，两个端点都 ≥4.6:1 才用白字，否则翻成近黑或按 0.05 步长压深整条渐变。**128 皮肤 × 两端点 = 256 项全部 ≥4.5:1。**
+
+### 文档（与实装功能对齐）
+- **`locale/zh.json` / `locale/en.json` 的 `meta.description` 重写**：原描述只写到「一级/二级分类 + 启停 + 失效台账」，完全没提 v1.9.0 之后新增的自定义分组、树状/平铺、版本号徽章、调用台账看板、⚡ 热重载、全皮肤自适应配色 —— 与实装功能严重不符。现按真实功能重写。
+- **`README.md`（主 README，英文为主）补全 v1.9.0–v1.9.9 全部功能**：新增「自定义分组」「树状 / 平铺双模式」「版本号徽章」「调用台账看板」「热重载」「性能」「全皮肤自适应配色」七节中文说明 + 对应 4 条英文 Highlights；API 表补 `/rev`、`/reload`、`/groups`（含 11 个 action）、`/ledger/stats`（含 `gran`/`sort` 参数），`/skills` 注明返回 `version` 字段。原来 API 表完全没有分组、统计、热重载这三组接口。
+- **`README-zh.md` 数字口径修正**：AI 分组的大类数公式写的是「技能数 ÷ 8，6~18 组、单组上限 12 个」，而 `lib/groups.js` 实际是 `Math.max(3, Math.min(16, Math.ceil(list.length / 12)))`（技能数 ÷ 12、3~16 个）且 `addSub()` 按 10 个切片、`CLASSIFY_SYSTEM` 要求「每个子类最多 10 个技能」。三处已全部改成 10 / ÷12 / 3~16，第三遍兜底拆组的「超过 12 个」也改为「超过 10 个」。
+- **`package.json` `description` 从「逐版本罗列」改为一份统一功能描述**：原来是把 v1.9.0→v1.9.10 每个版本的新增点串起来，越写越长、且和市场卡片/README 口径各不相同。现在 `package.json` description、`locale/zh.json` `meta.description`、`locale/en.json` `meta.description`、五语言 README 首段**全部指向同一份口径**（含「分组只改视图不动技能文件」「无版本显示暂未编版本号」两条容易被误解的点）。npm 市场的卡片描述取自 `package.json` description，插件管理器/设置页的描述取自 `locale/*.json` 的 `meta`，两边现在一字不差。
+- **`README-es.md` / `README-pt.md` / `README-hi.md` 首段补齐**：原来这三份只有一个 8 行的空壳（只有标题 + 一句旧描述 + 一个跳转链接），连分组、版本号、台账看板、热重载、皮肤自适应都没提。现在各自有一段完整的本地语言功能描述，标题统一为 `Skill Browser`。
+
+### 校验
+- **`scripts/audit-contrast.mjs`（新写，随包发布，唯一权威口径）**：128 皮肤 × 18 组前景/背景组合 = **2304 项，0 项不达标**。与旧临时脚本的差别：
+  - 语义变量直接从真实调用链取 —— 切皮肤后读 `<style id="dsb-skin-style">` 的 `textContent`，不另存一份「期望值」，杜绝审计与实现各算一套的假绿。
+  - 背景一律取**实际叠层色**：`card = chipBg over panel`、`surface = --dsb-surface`（吸顶表头不透明底实算值）。
+  - 渐变底按**两个端点分别校验**：品牌渐变 `--dsb-onbrand-bg1/2`、分组大类行 `--dsb-tile1/2`（叠 `--dsb-shade` 后）。只测中点会漏掉浅端。
+  - 踩过的坑写进脚本注释：DOM stub 的 `localStorage` 必须可读写，否则 `SKIN.setSkin(id)` 记不住，128 款皮肤全按 01 号深色皮肤算 → 20 款浅色皮肤集体假报不达标（首轮就误报 200 项）。
+- `audit_onbrand.mjs`：128 皮肤逐款取 `--dsb-onbrand-bg1/2` 与 `--dsb-onbrand`，两端点对比度 **0 项 < 4.5:1**。
+- `doc_audit2.mjs` / `doc_audit3.mjs` / `route_audit.mjs`：README-zh 16 项功能词全覆盖；README.md 10 项新功能词 + 4 个新路由全在位；实装 17 条路由与文档逐一对应。
+- `scripts/check-bom.mjs`：37 个文本文件 **0 BOM**。
+
+> **口径统一**：此前各版本 CHANGELOG 出现过 `14 组 1792 项`、`17 组 2176 项` 两种数字，那是各阶段临时脚本的覆盖范围（未含吸顶表头底、未拆渐变端点）。自 v1.9.10 起以 `scripts/audit-contrast.mjs` 的 **18 组 2304 项**为准，README-zh / README.md / package.json 描述均已对齐该数字。
+
 ## 1.9.9 — 2026-10-25
 
 ### 新增
