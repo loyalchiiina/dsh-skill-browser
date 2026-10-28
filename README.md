@@ -84,6 +84,13 @@ pnpm add dsh-skill-browser
 2. 在 `~/.dsh/profiles/desktop/package.json` 的 `dsh.profile.bundles` 数组加 `"dsh-skill-browser"`（**不要**加进 `dependencies`——本插件零 npm 依赖）
 3. 重启 DSH，右下角出现 🧩 悬浮球；打开 ⚙ 设置选择你的技能库文件夹即可
 
+## 适配版本
+
+- DSH 内核（`@deepseek-ai/dsh`）：**0.2.1-rc.3**（`package.json` 的 `engines.dsh` 已声明 `>=0.1.7-rc.1`）
+- DSH 桌面端：**2.0.20-next**（DSH NEXT）
+- Node.js：`^22.19.0 || >=24.0.0`
+- 已在上述版本实测通过；低版本 `0.1.7-rc.1` 及以上兼容。
+
 > ⚠️ **发布 24 小时内安装报错？** 这不是插件问题。DSH 桌面端内置供应链安全策略（minimumReleaseAge）：刚发布不到 24 小时的 npm 包会被 pnpm 拒绝安装（报错含 `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`）。**等一天再装即可**，无需任何配置。
 
 ## API（宿主端，仅回环可访问）
