@@ -1,87 +1,87 @@
 {
-  "name": "dsh-skill-browser",
-  "version": "1.9.10",
-  "description": "技能浏览器：悬浮球打开面板，把本机技能库变成可浏览、可检索、可治理的资产——两级分类 + 自定义分组（树状/平铺双模式、手动建组、⚡关键词分组、🤖AI 自动分组与 AI 封面，分组只改视图不动技能文件）、版本号徽章（无版本显示「暂未编版本号」）、单卡/分类/全库启停（自动备份）、SKILL.md 全文查看；调用台账看板（起止日期 + 日/周/月/年 + 排行榜 + 趋势图 + 失效明细），监听 tools/result 自动登记每次技能调用结果。⚡ 一键热重载，128 款皮肤全量自适应配色，技能库位置可配置，悬浮球可拖拽可复位。",
-  "type": "module",
-  "main": "lib/index.js",
-  "sideEffects": false,
-  "engines": {
-    "dsh": ">=0.1.7-rc.1",
-    "node": "^22.19.0 || >=24.0.0"
-  },
-  "exports": {
-    ".": "./lib/index.js",
-    "./client": "./lib/client.js",
-    "./package.json": "./package.json",
-    "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg"
-  },
-  "files": [
-    "lib",
-    "lib/**/*.js",
-    "lib/**/*.ps1",
-    "cordis.patch.yml",
-    "README.md",
-    "CHANGELOG.md",
-    "LICENSE",
-    "lib/orb/*.html",
-    "docs/images/**",
-    "locale/*.json",
-    "icon.svg",
-    "README-zh.md",
-    "README-es.md",
-    "README-pt.md",
-    "README-hi.md",
-    "scripts"
-  ],
-  "license": "MIT",
-  "keywords": [
-    "dsh-plugin",
-    "deepseek-harness",
-    "skill",
-    "技能",
-    "skills-browser",
-    "skill-browser",
-    "fluent",
-    "cfd",
-    "分类",
-    "category",
-    "chinese",
-    "中文简介"
-  ],
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    },
-    "client": {
-      "inject": [
-        "@deepseek-ai/dsh-client-connection",
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-client-ui-slots",
-        "@deepseek-ai/dsh-client-locale"
-      ],
-      "platform": "web"
-    }
-  },
-  "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh": ">=0.1.7-rc.1",
-    "@deepseek-ai/dsh-llm": "^0.1.7-rc.1 || ^0.2.0-rc.1"
-  },
-  "peerDependenciesMeta": {
-    "@deepseek-ai/dsh-llm": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh": ">=0.1.7-rc.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/loyalchiiina/dsh-skill-browser.git"
-  },
-  "homepage": "https://github.com/loyalchiiina/dsh-skill-browser#readme",
-  "packageManager": "pnpm@11.7.0"
+    "name":  "dsh-skill-browser",
+    "version":  "1.9.11",
+    "description":  "技能浏览器：悬浮球打开面板，把本机技能库变成可浏览、可检索、可治理的资产——三个 Tab（技能浏览/调用台账/快速上手）、树状/平铺双视图、手动+关键词+AI 三种分组（分组只改视图不动技能文件）、调用台账看板（调用次数/成功率/趋势图/技能调用排行）、130 款三球同步皮肤（6 列宽屏菜单）、7 步快速上手、DSH 设置页悬浮球导航分区；一键热重载，技能库位置可配置，悬浮球可拖拽可复位。",
+    "type":  "module",
+    "main":  "lib/index.js",
+    "sideEffects":  false,
+    "engines":  {
+                    "dsh":  "\u003e=0.1.7-rc.1",
+                    "node":  "^22.19.0 || \u003e=24.0.0"
+                },
+    "exports":  {
+                    ".":  "./lib/index.js",
+                    "./client":  "./lib/client.js",
+                    "./package.json":  "./package.json",
+                    "./locale/*.json":  "./locale/*.json",
+                    "./icon":  "./icon.svg"
+                },
+    "files":  [
+                  "lib",
+                  "lib/**/*.js",
+                  "lib/**/*.ps1",
+                  "cordis.patch.yml",
+                  "README.md",
+                  "CHANGELOG.md",
+                  "LICENSE",
+                  "lib/orb/*.html",
+                  "docs/images/**",
+                  "locale/*.json",
+                  "icon.svg",
+                  "README-zh.md",
+                  "README-es.md",
+                  "README-pt.md",
+                  "README-hi.md",
+                  "scripts"
+              ],
+    "license":  "MIT",
+    "keywords":  [
+                     "dsh-plugin",
+                     "deepseek-harness",
+                     "skill",
+                     "技能",
+                     "skills-browser",
+                     "skill-browser",
+                     "fluent",
+                     "cfd",
+                     "分类",
+                     "category",
+                     "chinese",
+                     "中文简介"
+                 ],
+    "dsh":  {
+                "bundle":  {
+                               "patch":  "./cordis.patch.yml"
+                           },
+                "client":  {
+                               "inject":  [
+                                              "@deepseek-ai/dsh-client-connection",
+                                              "@deepseek-ai/dsh-client-runtime",
+                                              "@deepseek-ai/dsh-client-ui-settings",
+                                              "@deepseek-ai/dsh-client-ui-slots",
+                                              "@deepseek-ai/dsh-client-locale"
+                                          ],
+                               "platform":  "web"
+                           }
+            },
+    "peerDependencies":  {
+                             "@deepseek-ai/cordis":  "^4.0.2",
+                             "@deepseek-ai/dsh":  "\u003e=0.1.7-rc.1",
+                             "@deepseek-ai/dsh-llm":  "^0.1.7-rc.1 || ^0.2.0-rc.1"
+                         },
+    "peerDependenciesMeta":  {
+                                 "@deepseek-ai/dsh-llm":  {
+                                                              "optional":  true
+                                                          }
+                             },
+    "devDependencies":  {
+                            "@deepseek-ai/cordis":  "^4.0.2",
+                            "@deepseek-ai/dsh":  "\u003e=0.1.7-rc.1"
+                        },
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/loyalchiiina/dsh-skill-browser.git"
+                   },
+    "homepage":  "https://github.com/loyalchiiina/dsh-skill-browser#readme",
+    "packageManager":  "pnpm@11.7.0"
 }
