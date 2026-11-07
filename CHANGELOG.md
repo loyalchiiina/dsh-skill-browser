@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.2 — 2026-11-08
+
+### 文档 / 截图
+- **README 功能描述重写**：一句话简介加入 MCP 管理 / AI 分组缓存与计时；「三个 Tab」→「四个 Tab」并补 MCP 行；新增「🔌 MCP 管理」章节（真实配置 / 状态 / 工具 / 统计 / 启停 / 重连 / 导出 / 本机扫描 / AI 修复）。
+- **效果图全面替换**：删除旧 `docs/images/panel-browse.png`、`panel-ledger.png`，改为 11 张新截图 `docs/images/shot-01.png … shot-11.png`。
+- **插件内「快速上手」7 步 → 8 步**：补 MCP 管理、全部展开/收起、每行 N 列、AI 分组缓存与计时、「清除缓存并重新生成」。
+- **`locale/zh.json` / `locale/en.json` 描述补齐**：MCP 扫描、AI 修复、AI 分组结果缓存与计时浮窗。
+
 ## 2.0.1 — 2026-11-08
 
 ### 修复
