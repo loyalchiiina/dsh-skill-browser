@@ -1,5 +1,36 @@
 # Changelog
 
+## 2.0.0 — 2026-11-07
+
+### 新增：MCP 管理（面板第 4 个 Tab，位于「调用台账」与「快速上手」之间）
+- **读取正在使用的 MCP 配置**：枚举运行时 `ctx.loader` 里每一个 `@deepseek-ai/dsh-mcp-client` 条目，返回真实合并后的配置（serverName / transport / command / args / cwd / url / env 键名），不是读文件猜测。`GET /dsh-skill-browser/mcp/servers`，页面右上「刷新」按钮即时重读。
+- **真实状态**：直接读 Cordis FiberState（pending / loading / active / failed），叠加 `disabled` 与已注册工具数，不再靠日志推断。
+- **工具清单与自动功能概括**：按 `mcp__<serverName>__` 前缀从工具注册表取每个 MCP 的工具与描述；按工具名/描述里的动词关键词自动归类（查询 / 执行 / 写入配置 / 删除停止 / 导出 / 文件 / 会话），生成「N 个工具，主要提供…能力」的概括。
+- **调用统计（落盘累计）**：监听官方 `tools/result` 事件，按 `mcp__<server>` 归类写入 `~/.dsh/data/dsh-skill-browser/mcp-calls.jsonl`（3MB 自动压实为最近 3000 条）。卡片显示累计/失败次数与最近调用时间，详情内显示工具调用排行与近 24 小时计数。提供「清空统计」。
+- **启停 / 重连**：停用/启用会写入 profile `cordis.patch.yml` 末尾一个带 `BEGIN/END` 标记的**受管覆盖块**（纯文本追加，幂等）；**不改写整份 YAML、不丢失任何中文注释**（`loader.update` 走 `yaml.dump` 会重写整文件并抹掉 3449 行注释，已排除）。DSH 用户补丁层支持 HMR，改完热应用、重启同样保留。重连走 Cordis Fiber 的内存重启（`fiber.update(config,true)`），不碰文件。
+- **导出**：反解为 Claude Desktop / Cursor 同构的 `mcpServers` JSON，一键复制；可选打码敏感环境变量。`GET /mcp/export?mask=0|1`。
+
+### 实现要点
+- 新增宿主子模块 `lib/mcp.js`（走 `RELOAD_V` 热加载，与 scan/groups 一致）；`lib/index.js` 增加 MCP 统计监听与 `/mcp/*` 七条路由；`lib/client.js` 增加第 4 个 Tab、卡片网格、状态胶囊、详情、导出弹层与事件委托。
+- 统计与主数据**分开请求**（`Promise.all`），统计失败不清空服务器列表。
+- 启停前自动备份 `cordis.patch.yml` 到 `~/.dsh/backups/`（保留最近 20 份）。
+
+### 追加（同日）：AI 分组提速 / 缓存 / 计时 + MCP 扫描与 AI 修复
+- **AI 分组提速**：补漏调用仅在遗漏 > 20 个技能时才执行；`reasoningEffort` 可压到 low（provider 不支持时自动去掉该参数并重试，实测 magpie 报 `UNSUPPORTED_REASONING_EFFORT` 已自愈）；超时放宽到 150s；模型流 abort 时自动重试一次。
+- **结果缓存**：按「技能目录集 + mode」指纹缓存 24 小时，命中直接复用、秒回不调模型；设置面板与分组方案弹层均可一键清除缓存。
+- **计时可视化**：分组进行中面板浮窗显示「已用 Xs ／ 预计约 40s」+ 进度条；完成后方案弹层显示累计用时；分组工具栏常驻「上次分组 X.Xs · 并行N批 / 串行」或「缓存 0.0s」，写入 localStorage，折叠 / 切走对话 / 重开面板均保留。
+- **AI 分组只读铁律（代码级约束）**：模型输入只允许元数据白名单（目录名 + 中文名 / frontmatter description 前 60 字 + 现分类），**绝不读取 SKILL.md 正文**，**绝不修改 / 移动 / 重命名 / 删除任何技能文件**；含行长断言兜底，超长即拒绝。
+- **并行分批**：技能数 ≥ 45 时最多 4 批并行分类，结果按同名大类归并去重；任一批失败自动回退串行单次（`PARALLEL_CLASSIFY` 单点开关可关）。
+- **MCP「🔍 本机 MCP」**：扫描 DSH 已配置的 MCP + 各 profile / 本地插件 / 全局 npm 目录里所有含 mcp 的包，列出「已配置 / 已装未配置」清单（只读）。接口 `GET /mcp/local-scan`。
+- **MCP「🛠 AI 修复」**：诊断异常 MCP（启动失败 / 调用失败 / 已停用），规则 + AI 给出修复动作（reconnect / enable / disable / clean），确认后执行；写配置前自动备份。接口 `GET /mcp/ai-diagnose`、`POST /mcp/ai-fix/apply`。
+- **修复「新建分组 / 重命名 / 新建子类」点不动**：Electron 不支持 `window.prompt`（静默返回空），改为面板内输入弹层（回车确认 / Esc 取消）。
+- **技能卡片开关对齐**：卡片等高 + 底部操作区 `margin-top:auto` 贴底，同一行内各卡开关滑块落在同一水平线。
+
+### 已知边界（本轮未做）
+- 「粘贴 JSON 一键导入」属 P2，暂未实现（导出已有，导入需写 insert 块，风险面更大，另行提交）。
+- 未提供新增/编辑/删除 MCP 的表单（需精确改写 109KB 补丁文件，误操作可致 DSH 起不来，暂不提供）。
+- 若某 MCP 来自内置层（不在用户 profile 补丁里），启停会返回「无法用文件覆盖」而不是冒险改内置层。
+
 ## 1.9.10 — 2026-10-25
 
 ### 修复
