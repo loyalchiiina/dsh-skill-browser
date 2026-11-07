@@ -5,4 +5,4 @@ node_modules/
 *.bak
 *.bak-*
 _resume/
-__pycache__/
+__pycache__/_pub*.log
