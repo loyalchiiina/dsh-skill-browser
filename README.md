@@ -1,5 +1,10 @@
 # dsh-skill-browser 🧩 技能浏览器
 
+> **功能描述**：技能与 MCP 浏览器：一个悬浮球四个页面。技能浏览（系统目录选库、两级分类加自定义分组、树状/平铺、手动/关键词/AI 分组且只发元数据、搜索、单卡或全库启停并自动备份）、调用台账（次数/成功率/趋势/排行）、MCP（真实 loader 配置与 Fiber 状态、工具与调用统计、启停/重连/导出，并扫描未配置服务器做 AI 修复）、快速上手。130 款皮肤在三颗悬浮球间同步。适配 DSH 内核 0.2.2-rc.1。
+>
+> **English**: Skills and MCP browser behind one floating ball with four tabs: Skills (native folder picker, two-level categories plus custom groups, tree or flat view, manual, keyword and AI grouping on metadata only, search, and per-card or whole-library enable/disable with timestamped backups), Call Ledger (counts, success rate, trend, ranking), MCP (live loader config, real Fiber states, per-server tools and call stats, enable, disable, reconnect, export to mcpServers JSON, plus scan-and-AI-fix for unconfigured servers) and Quick Start. 130 skins sync across the three balls. Adapts DSH kernel 0.2.2-rc.1.
+
+
 **把技能库变成看得见、搜得到、管得住的资产。**
 
 DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」字悬浮球，点开即**技能与 MCP 浏览器**面板——技能库秒级浏览、树状/平铺双视图、手动 + 关键词 + AI 三种分组（AI 分组带**结果缓存**与**计时浮窗**）、调用台账看板、**MCP 管理**（真实配置 / 状态 / 工具 / 调用统计 / 启停 / 重连 / 导出，外加**本机 MCP 扫描**与**AI 修复**）、130 款三球同步皮肤。**分组只是视图归档，绝不移动任何技能文件；AI 分组只读元数据，绝不读正文、绝不改技能。**
