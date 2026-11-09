@@ -31,7 +31,8 @@
     "README-es.md",
     "README-pt.md",
     "README-hi.md",
-    "scripts"
+    "scripts",
+    "screenshots.json"
   ],
   "license": "MIT",
   "keywords": [
