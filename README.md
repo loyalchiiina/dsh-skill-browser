@@ -1,13 +1,13 @@
 # dsh-skill-browser 🧩 技能浏览器
 
-> **功能描述**：技能与 MCP 浏览器：一个悬浮球五个页面。技能浏览（系统目录选库、两级分类加自定义分组、树状/平铺、手动/关键词/AI 分组且只发元数据、搜索、单卡或全库启停并自动备份）、调用台账（次数/成功率/趋势/排行）、MCP（真实 loader 配置与 Fiber 状态、工具与调用统计、启停即时跟随/重连/卸载/导出，并扫描未配置服务器做 AI 修复）、快速上手、市场 · MCP 市场（官方 Registry + 29 条精选免费目录、19 大类树状/平铺分类、网格/列表双模式、一键安装/卸载、仅免费筛选）、面板重绘不跳顶且关闭后记住上次滚动位置，卡片每行列数技能 3~6、MCP 3~5。130 款皮肤在三颗悬浮球间同步。适配 DSH 内核 0.2.2-rc.1。
+> **功能描述**：技能与 MCP 浏览器：一个悬浮球五个页面。技能浏览（系统目录选库、两级分类加自定义分组、树状/平铺、手动/关键词/AI 分组且只发元数据、搜索、单卡或全库启停并自动备份）、调用台账（次数/成功率/趋势/排行）、MCP（真实 loader 配置与 Fiber 状态、工具与调用统计、启停即时跟随/重连/卸载/导出，并扫描未配置服务器做 AI 修复）、市场 · MCP 市场（官方 Registry + 29 条精选免费目录、19 大类平铺分类、网格/列表双模式、一键安装/卸载、仅免费筛选，与 MCP 页双向即时同步）、快速上手（9 步）；面板重绘不跳顶且关闭后记住上次滚动位置，卡片每行列数技能 3~6、MCP 3~5、市场 3~6。130 款皮肤在三颗悬浮球间同步。适配 DSH 内核 0.2.2-rc.1。
 >
-> **English**: Skills and MCP browser behind one floating ball with five tabs: Skills (native folder picker, two-level categories plus custom groups, tree or flat view, manual, keyword and AI grouping on metadata only, search, and per-card or whole-library enable/disable with timestamped backups), Call Ledger (counts, success rate, trend, ranking), MCP (live loader config, real Fiber states, per-server tools and call stats, instant enable/disable follow, reconnect, uninstall, export to mcpServers JSON, plus scan-and-AI-fix for unconfigured servers), Home (MCP market: official Registry plus a curated free catalog, 19 categories in tree or flat mode, grid or list layout, one-click install/uninstall, free-only filter) and Quick Start. The panel never jumps back to the top on redraw and restores its scroll position when reopened. 130 skins sync across the three balls. Adapts DSH kernel 0.2.2-rc.1.
+> **English**: Skills and MCP browser behind one floating ball with five tabs: Skills (native folder picker, two-level categories plus custom groups, tree or flat view, manual, keyword and AI grouping on metadata only, search, and per-card or whole-library enable/disable with timestamped backups), Call Ledger (counts, success rate, trend, ranking), MCP (live loader config, real Fiber states, per-server tools and call stats, instant enable/disable follow, reconnect, uninstall, export to mcpServers JSON, plus scan-and-AI-fix for unconfigured servers), Market (MCP market: official Registry plus a curated free catalog, 19 categories in flat mode, grid or list layout, one-click install/uninstall, free-only filter, two-way instant sync with the MCP tab) and Quick Start (9 steps). The panel never jumps back to the top on redraw and restores its scroll position when reopened. 130 skins sync across the three balls. Adapts DSH kernel 0.2.2-rc.1.
 
 
 **把技能库变成看得见、搜得到、管得住的资产。**
 
-DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」字悬浮球，点开即**技能与 MCP 浏览器**面板（五个 Tab：技能浏览 / 调用台账 / MCP / 快速上手 / 市场 · MCP 市场）——技能库秒级浏览、树状/平铺双视图、手动 + 关键词 + AI 三种分组（AI 分组带**结果缓存**与**计时浮窗**）、调用台账看板、**MCP 管理**（真实配置 / 状态 / 工具 / 调用统计 / 启停即时跟随 / 重连 / 卸载 / 导出，外加**本机 MCP 扫描**与**AI 修复**）、**市场 · MCP 市场**（官方 MCP Registry + 29 条精选免费目录、19 大类树状/平铺分类、网格/列表双模式、一键安装写入 `cordis.patch.yml` 并自动备份 / 一键卸载、仅免费筛选、24 小时磁盘缓存）、**滚动位置记忆**（关掉再打开回到原处，启停轮询也不跳顶）、130 款三球同步皮肤。**分组只是视图归档，绝不移动任何技能文件；AI 分组只读元数据，绝不读正文、绝不改技能。**
+DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」字悬浮球，点开即**技能与 MCP 浏览器**面板（五个 Tab：技能浏览 / 调用台账 / MCP / 市场 · MCP 市场 / 快速上手）——技能库秒级浏览、树状/平铺双视图、手动 + 关键词 + AI 三种分组（AI 分组带**结果缓存**与**计时浮窗**）、调用台账看板、**MCP 管理**（真实配置 / 状态 / 工具 / 调用统计 / 启停即时跟随 / 重连 / 卸载 / 导出，外加**本机 MCP 扫描**与**AI 修复**）、**市场 · MCP 市场**（官方 MCP Registry + 29 条精选免费目录、19 大类平铺分类带每类数量、网格/列表双模式、卡片逐字复刻技能卡、每条 MCP 用其自身真实图标、一键安装写入 `cordis.patch.yml` 并自动备份 / 一键卸载、仅免费筛选、24 小时磁盘缓存、与 MCP 页双向即时同步）、**滚动位置记忆**（关掉再打开回到原处，启停轮询也不跳顶）、130 款三球同步皮肤。**分组只是视图归档，绝不移动任何技能文件；AI 分组只读元数据，绝不读正文、绝不改技能。**
 
 ![技能与 MCP 浏览器 · 01](docs/images/shot-01.png)
 ![技能与 MCP 浏览器 · 02](docs/images/shot-02.png)
@@ -30,8 +30,8 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 | **技能浏览** | 搜索框 + 分组栏（树状/平铺、全部展开/收起、每行 N 列）+ 技能卡片墙（名称 / 中文简介 / 版本徽章 / 分类 / 修改时间 / 启停开关 / 移动到分组） |
 | **调用台账** | 统计卡 + 趋势图 + 技能调用排行 + 自动登记流水 |
 | **MCP** | MCP 服务器清单（状态 / 工具数 / 调用统计）+ 启停 / 重连 / 卸载 / 导出 + 🔍 本机 MCP 扫描 + 🛠 AI 修复 |
-| **快速上手** | 8 步图文引导，黑白线性图标，60 秒上手 |
-| **市场 · MCP 市场** | 官方 MCP Registry + 精选免费目录（29 条）双数据源；19 大类树状/平铺分类；网格/列表双模式、列数 3~6；一键安装（写 `cordis.patch.yml` 并自动备份）/ 一键卸载；仅免费筛选；24 小时磁盘缓存 |
+| **市场 · MCP 市场** | 官方 MCP Registry + 精选免费目录（29 条）双数据源；19 大类平铺分类（带每类数量）；网格/列表双模式、列数 3~6；一键安装（写 `cordis.patch.yml` 并自动备份）/ 一键卸载；仅免费筛选；24 小时磁盘缓存 |
+| **快速上手** | 9 步图文引导，黑白线性图标，60 秒上手 |
 
 > **滚动位置**：五个 Tab 各自记住上次停留的位置（`localStorage` 键 `dsb-scroll-v1`），关掉面板再打开直接回到原处；面板内重绘（启停乐观更新、轮询收敛）不会把列表甩回顶部，列表滚动容器在重绘前后被显式保存与写回。技能 Tab 里的分组栏（`#dsb-groups`）也单独记一份（`groups` 键），不会和技能卡列表互相覆盖。**市场** Tab 同样覆盖。
 
@@ -77,7 +77,7 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 
 - **双数据源**：① 官方 MCP Registry（`https://registry.modelcontextprotocol.io/v0/servers`，分页 `limit=100`，去重后约 600+ 个 server）；② 本地精选免费目录 `lib/market-curated.json`（29 条，npm 24 / pypi 5，全部包名已实盘验证存在），**精选优先并去重**
 - **缓存与刷新**：市场数据落盘 `~/.dsh/data/dsh-skill-browser/market.json`，24 小时有效；网络失败降级用旧缓存并标 `stale`，无缓存时只显示精选目录；需要立即取新数据时加 `?refresh=1` 强制刷新
-- **19 大类 + 树状/平铺**：文件系统 / 数据库 / 开发工具 / 网页与搜索 / 浏览器自动化 / 代码仓库 / 文档与办公 / 云服务与部署 / 通信与邮件 / 图像与多媒体 / 知识与记忆 / 任务与自动化 / AI 与智能体 / 金融与交易 / 地理与地图 / 教育与学习 / 运维与监控 / 安全与身份 / 其他，分类视图可切换**树状 / 平铺**
+- **19 大类 + 平铺分类**：文件系统 / 数据库 / 开发工具 / 网页与搜索 / 浏览器自动化 / 代码仓库 / 文档与办公 / 云服务与部署 / 通信与邮件 / 图像与多媒体 / 知识与记忆 / 任务与自动化 / AI 与智能体 / 金融与交易 / 地理与地图 / 教育与学习 / 运维与监控 / 安全与身份 / 其他；分类 chip 恒为**平铺胶囊**，每个 chip 带该分类条目数（与「仅免费 / 全部」范围联动重算，无条目的分类自动隐藏）
 - **卡片排布仿技能卡**：网格 / 列表双模式；列数 3~6 可选（`localStorage` 键 `dsb-home-cols`）；搜索框 300ms 节流；**「仅免费 / 全部」范围筛选**（默认仅免费）；已装条目标「已装 ✓」
 - **免费口径**：npm / pypi 本地可运行包 = 免费可装；只有远程 HTTP 的标「远程·需自备 Key」，不可直接安装
 - **安装流程**：点「安装」→ 需要环境变量（needsKey / envRequired）时先弹层填 Key → 后端把条目写进当前 profile 的 `cordis.patch.yml` 的 `- insert:` 块（**写前自动备份到 `~/.dsh/backups/`**）→ DSH 补丁层热重载生效
@@ -92,15 +92,17 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 - 皮肤菜单 **6 列宽屏布局**，130 款一屏尽览；设置页提供「三球皮肤同步」开关
 - 头部按钮全部为**黑白线性 SVG 图标**（皮肤 / 设置 / 热重载 ⚡ / 刷新 ↻ / 关闭 / GitHub Star），任何皮肤下清晰可读
 
-### 📖 快速上手（7 步，黑白线性图标）
+### 📖 快速上手（9 步，黑白线性图标）
 
 1. **选技能库位置**（第一步）→ 设置 → 选择文件夹 → 保存自动重扫
 2. **刷新** 让新技能进列表 → 不重启 DSH 立即生效再点**热重载 ⚡**（顺序：先选库 → 再刷新 → 最后热重载）
-3. **搜索与筛选**：关键词 / 树状平铺 / 关键词分组 / AI 自动分组
+3. **搜索与筛选**：关键词 / 分组栏树状平铺 / 关键词分组 / AI 自动分组
 4. **看详情 / 启停**：卡片展开全文，可直接禁用/启用
 5. **调用台账**：日期区间 + 粒度 → 排行、失败率与趋势
 6. **分组管理**：新建大类/子类、移动技能；删分组不删技能文件
-7. **认识面板按钮**：皮肤（130 款三球同步）→ 设置 → 热重载 → 刷新 → 关闭 → Star
+7. **MCP 管理**：启停 / 重连 / 卸载 / 导出、工具清单与调用统计、🔍 本机扫描、🛠 AI 修复
+8. **市场**：官方 Registry + 29 条精选免费目录，19 大类平铺分类；卡片「安装」→ 需环境变量时弹层填 Key → 写入 `cordis.patch.yml`（自动备份）并热加载；已装条目显示「卸载」，双向即时同步
+9. **认识面板按钮**：皮肤（130 款三球同步）→ 设置 → 热重载 → 刷新 → 关闭 → Star
 
 ### ⚙ DSH 设置页「悬浮球导航」分区（本插件提供）
 
