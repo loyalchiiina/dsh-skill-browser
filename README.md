@@ -20,6 +20,8 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 ![技能与 MCP 浏览器 · 09](docs/images/shot-09.png)
 ![技能与 MCP 浏览器 · 10](docs/images/shot-10.png)
 ![技能与 MCP 浏览器 · 11 推荐三兄弟](docs/images/shot-11.png)
+![技能与 MCP 浏览器 · 12 MCP 市场（全部免费 · 19 大类带数量 · 一键安装/卸载）](docs/images/shot-12.png)
+![技能与 MCP 浏览器 · 13 MCP 管理（十个 MCP · 已连接 8 个 · 191 个工具）](docs/images/shot-13.png)
 
 ## 功能一览
 
