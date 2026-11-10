@@ -1,6 +1,116 @@
 # Changelog
 
-## 2.0.3 — 2026-11-10：脱敏，示例路径改语义占位，不再含本机盘符。
+## 2.0.13 — 2026-11-10
+
+### 新增
+- **所有「刷新」都有即时反馈**：之前点刷新没有任何提示，用户不知道刷没刷、刷了什么。现在四个 Tab 的刷新都会**先 toast「正在刷新 …」，完成后再 toast 结果**：
+  - 右上角刷新钮：按当前 Tab 分别提示「正在刷新技能库 / 调用台账 / MCP 列表 / 市场目录」，完成后报「技能库已刷新：共 N 个技能」「调用台账已刷新：人工记录 N 条 · 自动调用 M 条」「MCP 已刷新：共 N 个 · 已连接 M 个」「市场目录已刷新：共 N 个 · 免费 M 个」。
+  - 市场工具条的「⟳ 刷新」、MCP 工具条的「刷新」同款。
+  - 失败时红 toast 报原因（如「刷新失败：…」）。
+- 内部静默刷新（安装后自动重载、首载、切 Tab）**不弹提示**，只有用户主动点击才提示，避免噪音。
+
+## 2.0.12 — 2026-11-10
+
+### 修复
+- **市场工具条切「网格/列表」时按钮跳动**：根因是「列 3/4/5/6」选择器只在网格模式渲染、列表模式消失，导致整行宽度变化、搜索框和按钮跟着重排。改为**网格/列表两种模式都固定渲染列选择器（同宽）**，列表模式下点「列 N」会**自动切回网格并应用该列数**；搜索框 `flex` 基准固定为 `180px`（`min/max-width` 不变），不再随存在与否拉伸。切换查看方式时整条工具条稳定不跳动。
+- 顺带确认：列表模式下列选择器保留交互（点击生效）。
+
+## 2.0.11 — 2026-11-10
+
+### 修复
+- **MCP Tab 卸载后切回市场仍显示「已装✓」（残留）**：市场「已装/未装」判定原依赖缓存的 `H.installed`（由 `refreshInstalledMap` 按 `serverName` 建），存在时序过期风险。现新增 `homeIsInstalled(name)` —— 判定时**实时遍历最新 `S.mcp.data.servers`**（按 `serverName` 匹配），只要运行时里已经没有该条，市场按钮立刻回到「安装」，不再信任可能过期的缓存；`S.mcp.data` 未就绪时才退回缓存键（尽力而为）。
+- 连带保证：市场排」已装在前」的 `homeFiltered` 排序、卡片按钮（`homeActionHtml`）判定都改走 `homeIsInstalled`，与运行时完全一致。
+
+## 2.0.10 — 2026-11-10
+
+### 修复
+- **市场安装 / 卸载后按钮不即时刷新**：`doHomeInstall` / `doHomeUninstall` 成功回调里增删 `H.installed` 后没有立即 `paintHome()`，只靠 `setTimeout(loadHome, 800)`，而 60s 缓存会提前 return —— 现在立即重绘，并用 `mcpPollUntil` 轮询到该条目在运行时真正出现/消失后再重建已装集合并重绘（消除 loadMcp 的 refreshInstalledMap 在热重载未完成时把刚加条目冲掉的竞态）。
+- **MCP Tab 卸载后切回市场「已装」不同步**：`runMcpUninstall` 成功回调现在轮询到条目从运行时消失后 `refreshInstalledMap()` + `paintHome()`。
+- **MCP Tab 启用后市场「已装」不自动刷新**：`doMcpToggle` 的轮询收敛回调里补上 `refreshInstalledMap()` + `paintHome()`（enable 的条目进 installed、disable 的移出）。
+- **每次切进市场都先用最新 MCP 运行时重建已装集合**：`paint()` 的 `isHome` 分支在处理前先 `refreshInstalledMap()`，保证 MCP Tab 里任何增删启停在切回市场时立刻反映。
+
+## 2.0.9 — 2026-11-10
+
+### 修复
+- **市场页永远没有滚动条（重启多少次都一样）**：根因是 `buildPanel()` 里 `#dsb-home-bar` / `#dsb-home-cats` / `#dsb-home-cards` 三个子容器**只写了 id、没有写 class**，而全部样式规则用的是**类选择器** `.dsb-home-bar` / `.dsb-home-cats` / `.dsb-home-cards`。于是 `flex:1` / `min-height:0` / `overflow-y:auto` 一条都没生效，卡片区高度不受约束、永不溢出、永不出现滚动条。已给三个容器补上对应 class，滚动链（`#dsh-skill-browser-panel` 定高 → `#dsb-built` flex:1 → `#dsb-home` flex:1/min-height:0 → `.dsb-home-cards` flex:1/min-height:0/overflow-y:auto）这才真正接通。
+- **分类数量与列表条数对不上**：分类 chip 的数量改为**跟随当前「仅免费 / 全部」筛选实时重算**（用 `H.data` 在前端统计），保证「chip 上的数字 = 点进去实际看到的卡片数」；当前筛选下没有条目的分类直接隐藏，不再出现「chip 写着 N 却一张卡都没有」。
+- **顶部统计口径含混（「共 882 个」vs「全部 151」）**：改为 `显示 151 / 库 882 · 免费 151 · 已装 10`，一眼能看出当前筛选显示多少、库内总量多少。
+
+### 变更
+- **「列 3/4/5/6」+「刷新」收进右侧组**：新增 `.dsb-home-rgroup{margin-left:auto;display:flex;flex-wrap:nowrap}`，两者固定在工具条同一行的最右端，不再折到第二行左侧。
+
+## 2.0.8 — 2026-11-10
+
+### 变更
+- **市场分类 chip 标注该分类的 MCP 数量**：与技能页分类数量一致，每个分类名后用灰色小字显示 Registry 里该分类的真实条数（如「全部 882 / 文件系统 11 / 代码仓库 9」），数量来自后端 `buildCategories` 的 `count`。
+- **市场页标题图标改为 ◈ 六边形**：从 🧩（拼图）改为空心六边形，更简洁高级，契合「生态 / 聚合」语义。
+- **市场卡片名称放大加粗**：`.dsb-home-card .dsb-card-name` 字号 11px → 13.5px、`font-weight:700`，仅作用市场卡（技能页同名类不受影响）；版本徽章（`.dsb-ver` / `.dsb-ver-none`）保持 10.5px 常规字重以区分层级。
+
+### 修复
+- **列表模式「只显示 3 张、无滚动条」排查**：诊断确认磁盘代码（`paintHomeCards` 列表/网格共用 `homeFiltered()` 全量 forEach、无截断；`#dsb-home`/`.dsb-home-cards` flex 滚动链完好）并无缺陷，现象来自加载了旧 client bundle，需彻底重启 DSH 而非软刷新。
+
+## 2.0.7 — 2026-11-10
+
+### 修复
+- **市场卡片与技能卡不统一**：市场卡原本用自成一派的 `.dsb-home-badge` / `.dsb-home-ver` / `.dsb-home-tags`，「列表」模式还是整行横排的 `.dsb-home-row`，与技能浏览的卡片观感差得很远。现改为**逐字复刻技能卡**：同一套 `.dsb-card` / `.dsb-card-name` / `.dsb-card-zh` / `.dsb-card-tag` / `.dsb-card-mtime` / `.dsb-card-foot` / `.dsb-card-gtag` / `.dsb-ver` / `.dsb-badge-off`，同样的字体、字号、圆角、hover 与行数截断；列数切到 1 时就是技能卡的竖排列表。
+- **市场卡把图标 URL 当文本渲染**：`esc(s.icon || "")` 直接把 registry 的 `icons[].src` 当字符串打进 `.dsb-card-name`，界面上因此出现一长串 `https://…/favicon.svg` 字面文本。改为按图标类型渲染：URL → `<img>`，否则当 emoji。
+- **市场按钮样式与技能卡不一致**：安装 / 卸载按钮原为自建 `.dsb-home-btn`，现统一复用技能卡的 `.dsb-movebtn`（同款边框、圆角、字号），仅「卸载」额外加红调。
+- **`.dsb-card-zh` 被市场样式全局覆盖成 3 行**：该规则是全局选择器，会连带把技能卡描述行数从 2 行改成 3 行。已移除该覆盖，两处卡片统一 2 行截断。
+
+### 新增
+- **MCP 各用自己的真实图标**：新增 `homeIcoUrl()` / `homeIco()`，按优先级取图标 —— ① registry 自己登记的 `icons[].src`（官方 logo）② 其 GitHub 属主头像 `https://github.com/<owner>.png` ③ 其主页站点的 favicon（`icons.duckduckgo.com/ip3/<host>.ico`）④ 分类 emoji 兜底。`<img loading="lazy">` 懒加载，`onerror` 自动降级为分类 emoji，绝不再统一塞一个 🧩。
+- **精选条目支持自带 `icon` 字段**：`market-curated.json` 的条目可填真实 logo URL，`curatedToEntry()` 会原样透传给前端（留空则由上面第 ②③ 级回退推断）。
+
+## 2.0.6 — 2026-11-10
+
+### 新增
+- **「市场」Tab = MCP 市场（第 5 个 Tab，位置在快速上手之后）**：数据源两条 —— ① 官方 MCP Registry（`https://registry.modelcontextprotocol.io/v0/servers`，分页 `limit=100`，去重后约 600+ 个 server）；② 本地精选免费目录 `lib/market-curated.json`（29 条，npm 24 / pypi 5，全部包名已实盘验证存在），精选优先并去重。
+- **19 大类分类 + 树状/平铺双视图**：文件系统 / 数据库 / 开发工具 / 网页与搜索 / 浏览器自动化 / 代码仓库 / 文档与办公 / 云服务与部署 / 通信与邮件 / 图像与多媒体 / 知识与记忆 / 任务与自动化 / AI 与智能体 / 金融与交易 / 地理与地图 / 教育与学习 / 运维与监控 / 安全与身份 / 其他。
+- **卡片排布仿技能卡**：网格 / 列表双模式；列数 3~6 可选（`localStorage` 键 `dsb-home-cols`）；搜索框 300ms 节流；「仅免费 / 全部」范围筛选（默认仅免费）；已装条目标「已装 ✓」。
+- **一键安装**：点「安装」→ 需要环境变量（needsKey / envRequired）时先弹层填 Key → 后端把条目写进当前 profile 的 `cordis.patch.yml` 的 `- insert:` 块（写前自动备份到 `~/.dsh/backups/`）→ DSH 补丁层热重载生效。Windows 下 npm 包用 `node.exe + npx-cli.js` 启动（stdio 走 spawn 不经 shell，直接写 `npx` 会失败），pypi 包用 `uvx`，可执行文件路径运行时探测。
+- **一键卸载**：复用既有 `uninstallMcp`，缩进感知删除整条条目 + 清空壳 `- insert:` + 从受管块移除同名覆盖 + 写前备份。
+- **市场数据磁盘缓存**：`~/.dsh/data/dsh-skill-browser/market.json`，24 小时有效；网络失败降级用旧缓存并标 `stale`，无缓存时只显示精选目录。
+- **免费口径**：npm / pypi 本地可运行包 = 免费可装；只有远程 HTTP 的标「远程·需自备 Key」，不可直接安装。
+- **滚动位置记忆覆盖「市场」Tab**：关闭面板再打开回到原处。
+
+### 修复
+- **宿主热重载静默失败（新路由持续 404）**：`lib/market.js` 静态 `import { dataDir } from "./mcp.js"` 而 `mcp.js` 未导出 `dataDir`，Node ESM 链接期抛 `SyntaxError`，补丁层热重载因此静默失败（`LIVE.gen` 不递增、新路由 404）。已给 `mcp.js` 的 `dataDir` 加 `export`，并让 `market.js` 改为带 `RELOAD_V` 版本查询串的动态 import，避免命中启动时缓存的旧 `mcp.js` 模块实例。
+- **「市场」Tab 永久卡「加载中…」**：`paintHome()` 在数据未就绪时直接 `homeEl.innerHTML = ...` 整体覆写 `#dsb-home`，把 `#dsb-home-bar/cats/cards` 三个子容器销毁；数据到达后 `paintHomeBar/Cats/Cards` 全部因容器不存在静默早退、无法绘制。改为新增固定状态容器 `#dsb-home-state`：加载/错误/空态只写该容器、仅切换三个子容器的 `display`，**绝不整体覆写 `#dsb-home`**；并给三个 paint 函数的 `if(!el) return` 早退补一次性 `console.warn`，防止同类静默早退再次瞒过排查。
+
+### 说明
+- 精选目录 `lib/market-curated.json` 的包名逐条对 npm registry / pypi 探测验证；首版曾收录 17 个 npm 上已不存在的 `@modelcontextprotocol/server-*` 套件，已剔除或改用 Python 版（`mcp-server-fetch` / `mcp-server-git` / `mcp-server-sqlite` / `mcp-server-time`）。
+
+## 2.0.5 — 2026-11-10
+
+### 变更
+- **卡片每行列数改为「起步—封顶」区间**：技能列表「每行」只保留 **3 / 4 / 5 / 6**，MCP 卡片只保留 **3 / 4 / 5**（用户要求 3 起步、技能 6 封顶、MCP 5 封顶）。原来的「自」（自适应 `auto-fill`）和 2 列已移除 —— 自适应在宽屏下会摊成十几列，卡片被压得只剩标题，2 列又太浪费横向空间。
+- 两端默认值统一为 **3 列**（`S.cardCols` 与 `M.cols` 的默认值由 `0` 改为 `3`），旧 `localStorage` 里的 `"auto"` / `0` / `2` 会被初始化逻辑判为越界并归一到 3，不会渲染成空白列或半边空白。
+- **写入端与读取端同口径**：点击列数按钮时不再用 `parseInt(...) || 0` 兜底，改为与初始化一致的白名单校验（技能 3~6、MCP 3~5），异常值直接落 3。这样即使 DOM 属性被外部改坏，也不会落库成 `0` 从而退回 `auto-fill` 自适应（宽屏下卡片被摊成十几列）。
+- 引导页第 ③ 步里的「每行 N 列（自适应 / 2~6）」同步改为「（3~6）」，避免图文与实际不符。
+
+## 2.0.4 — 2026-11-10
+
+### 修复
+- **点停用 / 重连后列表跳回最上方**：`paintMcpNow()` 用 `host.innerHTML` 整体重建，`.dsb-mcp-grid` / `.dsb-mcp-tree` 被销毁重建，滚动条随之归零；而启停后的收敛轮询会连着重绘十几次，用户看到的就是「一点开关就跳回顶部，还得重新往下滚」。现在重绘前记录滚动容器的 `scrollTop`、重绘后写回；轮询也只在「启停 / 阶段 / 工具数」这类可见状态真的变化时才重绘（`mcpDataSig` 快照比对），不再每 700ms 闪一次。
+- **404 `unknown path` 直接甩给用户**：宿主端插件未重载时新加的路由注定 404。现在识别到该错误就翻译成「宿主端插件还是旧代码，请点 ⚡ 热重载或彻底重启 DSH 后重试」，启停 / 重连 / 卸载 / 清空统计四处统一走 `mcpFailToast`。
+- **MCP 卡片按钮不齐（不管几列都该对齐）**：`.dsb-mcp-acts` 原来是 `margin-top:2px`，按钮紧跟在上方内容后面，卡片内容长短不同就导致同一行里按钮的纵向高度、横向起点各不相同。改成与技能卡 `.dsb-card-foot` 同一套口径 —— `margin-top:auto` 贴卡片底部（同一行卡片等高，所以纵向对齐）、`padding-top:8px`、`justify-content:space-between` 铺满整行（同行卡片宽度相同，所以逐列横向对齐），列数变化不影响对齐。
+- **分组栏滚动位置不记忆**：`#dsb-groups` 是 `max-height:220px;overflow-y:auto` 的独立滚动容器，任何 `paint()` 都会重建它，此前既没保位也没纳入滚动记忆。现在重建前存 `scrollTop`、重建后写回，并单独用 `groups` 键存取（不再与技能卡列表共用 `skills` 键），滚动监听也改成每个容器各自节流。
+
+### 新增
+- **面板记住上次滚动位置**：关闭面板时把当前视图（技能 / 台账 / 快速上手 / MCP）的滚动位置写入 `localStorage`（键 `dsb-scroll-v1`），再次打开自动回到原处，不必每次从上往下翻。技能卡、台账、快速上手各用自己的滚动容器，MCP 取当前 grid / tree 容器，分组栏单独用 `groups` 键；异步内容还没渲染出高度时保留 pending，等下一次重绘或定时器再落位，不会把位置夹成 0。
+
+## 2.0.3 — 2026-11-10
+
+### 修复
+- **停用 / 启用 MCP 后滑块不动（必须刷新页面才移动）**：原实现是「写盘 → 等 900ms → 单次 refetch」。但链路是「写盘 → DSH 用户补丁层热重载 → loader entry 状态变化」，MCP 子进程卸载普遍慢于 900ms，refetch 读回的还是旧状态，重绘后滑块弹回原位，之后不再有任何请求，只能手刷页面。
+  现在改成三步：① **乐观更新**——点击后滑块立即跟随，不等网络往返；② **轮询收敛**——成功后每 700ms 重读一次运行时状态（上限 12 次 ≈ 8.4s），一旦 `disabled` 与目标一致立即停；③ **超时明示**——8.4s 仍未同步时弹提示「配置已写入，但热重载未完成，稍后点刷新或彻底重启 DSH」，不再静默弹回。失败自动回滚并恢复原状态。重连同样改为轮询到 `phase` 离开 `loading/pending`。
+
+### 新增
+- **MCP 卸载（卡片 / 树状按钮区「导出」右侧）**：二次确认后把该条 MCP 从 profile 补丁文件里**真正删掉**（不是禁用）。宿主侧 `uninstallMcp()` 做缩进感知的文本级删除：条目既可能顶级 `- id: xxx`，也可能挂在 `- insert:` 下（4 空格缩进），一律按「从 `- id:` 行起吞掉更深缩进的内容行」定位；有三种连带物一并处理——① 条目上方专属注释（注释里出现该 id / 去掉 `mcp-` 前缀的主体才认领，避免误删通用注释）；② 父级 `- insert:` 删完若只剩空壳（无兄弟条目、无其它内容）连父级行一起删，否则 YAML 留下 `insert: null` 会让 loader 报错；③ 受管覆盖块里残留的同 id `disabled` 覆盖一并清掉，不留死引用。写盘前自动备份到 `~/.dsh/backups/`，前端乐观移除条目，失败自动塞回列表。
+  新增路由 `POST /dsh-skill-browser/mcp/uninstall`。内置层 / npm 包自带的条目无法用文件覆盖删除，弹层里会明确提示改用「停用」。
+
+### 校验
+- 在真实 `cordis.patch.yml`（5468 行 / 446 个 loader 条目`副本`上演练：删除 `mcp-ansys-fluent` 与 `mcp-ansys-workbench` → 各删 25 / 22 行，父级 `insert:` 与专属注释一并清掉，其余 4 个官方 MCP 条目与全部中文注释完好；js-yaml 解析通过（顶层 40 → 38 项，**无 `insert: null` 空壳**）；重复删除同一 id 幂等返回 `removed:false`；受管块 3 个 id → 2 个。
 
 ## 2.0.2 — 2026-11-08
 

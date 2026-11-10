@@ -1,13 +1,13 @@
 # dsh-skill-browser 🧩 技能浏览器
 
-> **功能描述**：技能与 MCP 浏览器：一个悬浮球四个页面。技能浏览（系统目录选库、两级分类加自定义分组、树状/平铺、手动/关键词/AI 分组且只发元数据、搜索、单卡或全库启停并自动备份）、调用台账（次数/成功率/趋势/排行）、MCP（真实 loader 配置与 Fiber 状态、工具与调用统计、启停/重连/导出，并扫描未配置服务器做 AI 修复）、快速上手。130 款皮肤在三颗悬浮球间同步。适配 DSH 内核 0.2.2-rc.1。
+> **功能描述**：技能与 MCP 浏览器：一个悬浮球五个页面。技能浏览（系统目录选库、两级分类加自定义分组、树状/平铺、手动/关键词/AI 分组且只发元数据、搜索、单卡或全库启停并自动备份）、调用台账（次数/成功率/趋势/排行）、MCP（真实 loader 配置与 Fiber 状态、工具与调用统计、启停即时跟随/重连/卸载/导出，并扫描未配置服务器做 AI 修复）、快速上手、市场 · MCP 市场（官方 Registry + 29 条精选免费目录、19 大类树状/平铺分类、网格/列表双模式、一键安装/卸载、仅免费筛选）、面板重绘不跳顶且关闭后记住上次滚动位置，卡片每行列数技能 3~6、MCP 3~5。130 款皮肤在三颗悬浮球间同步。适配 DSH 内核 0.2.2-rc.1。
 >
-> **English**: Skills and MCP browser behind one floating ball with four tabs: Skills (native folder picker, two-level categories plus custom groups, tree or flat view, manual, keyword and AI grouping on metadata only, search, and per-card or whole-library enable/disable with timestamped backups), Call Ledger (counts, success rate, trend, ranking), MCP (live loader config, real Fiber states, per-server tools and call stats, enable, disable, reconnect, export to mcpServers JSON, plus scan-and-AI-fix for unconfigured servers) and Quick Start. 130 skins sync across the three balls. Adapts DSH kernel 0.2.2-rc.1.
+> **English**: Skills and MCP browser behind one floating ball with five tabs: Skills (native folder picker, two-level categories plus custom groups, tree or flat view, manual, keyword and AI grouping on metadata only, search, and per-card or whole-library enable/disable with timestamped backups), Call Ledger (counts, success rate, trend, ranking), MCP (live loader config, real Fiber states, per-server tools and call stats, instant enable/disable follow, reconnect, uninstall, export to mcpServers JSON, plus scan-and-AI-fix for unconfigured servers), Home (MCP market: official Registry plus a curated free catalog, 19 categories in tree or flat mode, grid or list layout, one-click install/uninstall, free-only filter) and Quick Start. The panel never jumps back to the top on redraw and restores its scroll position when reopened. 130 skins sync across the three balls. Adapts DSH kernel 0.2.2-rc.1.
 
 
 **把技能库变成看得见、搜得到、管得住的资产。**
 
-DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」字悬浮球，点开即**技能与 MCP 浏览器**面板——技能库秒级浏览、树状/平铺双视图、手动 + 关键词 + AI 三种分组（AI 分组带**结果缓存**与**计时浮窗**）、调用台账看板、**MCP 管理**（真实配置 / 状态 / 工具 / 调用统计 / 启停 / 重连 / 导出，外加**本机 MCP 扫描**与**AI 修复**）、130 款三球同步皮肤。**分组只是视图归档，绝不移动任何技能文件；AI 分组只读元数据，绝不读正文、绝不改技能。**
+DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」字悬浮球，点开即**技能与 MCP 浏览器**面板（五个 Tab：技能浏览 / 调用台账 / MCP / 快速上手 / 市场 · MCP 市场）——技能库秒级浏览、树状/平铺双视图、手动 + 关键词 + AI 三种分组（AI 分组带**结果缓存**与**计时浮窗**）、调用台账看板、**MCP 管理**（真实配置 / 状态 / 工具 / 调用统计 / 启停即时跟随 / 重连 / 卸载 / 导出，外加**本机 MCP 扫描**与**AI 修复**）、**市场 · MCP 市场**（官方 MCP Registry + 29 条精选免费目录、19 大类树状/平铺分类、网格/列表双模式、一键安装写入 `cordis.patch.yml` 并自动备份 / 一键卸载、仅免费筛选、24 小时磁盘缓存）、**滚动位置记忆**（关掉再打开回到原处，启停轮询也不跳顶）、130 款三球同步皮肤。**分组只是视图归档，绝不移动任何技能文件；AI 分组只读元数据，绝不读正文、绝不改技能。**
 
 ![技能与 MCP 浏览器 · 01](docs/images/shot-01.png)
 ![技能与 MCP 浏览器 · 02](docs/images/shot-02.png)
@@ -23,14 +23,19 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 
 ## 功能一览
 
-### 🗂 四个 Tab
+### 🗂 五个 Tab
 
 | Tab | 内容 |
 |---|---|
 | **技能浏览** | 搜索框 + 分组栏（树状/平铺、全部展开/收起、每行 N 列）+ 技能卡片墙（名称 / 中文简介 / 版本徽章 / 分类 / 修改时间 / 启停开关 / 移动到分组） |
 | **调用台账** | 统计卡 + 趋势图 + 技能调用排行 + 自动登记流水 |
-| **MCP** | MCP 服务器清单（状态 / 工具数 / 调用统计）+ 启停 / 重连 / 导出 + 🔍 本机 MCP 扫描 + 🛠 AI 修复 |
+| **MCP** | MCP 服务器清单（状态 / 工具数 / 调用统计）+ 启停 / 重连 / 卸载 / 导出 + 🔍 本机 MCP 扫描 + 🛠 AI 修复 |
 | **快速上手** | 8 步图文引导，黑白线性图标，60 秒上手 |
+| **市场 · MCP 市场** | 官方 MCP Registry + 精选免费目录（29 条）双数据源；19 大类树状/平铺分类；网格/列表双模式、列数 3~6；一键安装（写 `cordis.patch.yml` 并自动备份）/ 一键卸载；仅免费筛选；24 小时磁盘缓存 |
+
+> **滚动位置**：五个 Tab 各自记住上次停留的位置（`localStorage` 键 `dsb-scroll-v1`），关掉面板再打开直接回到原处；面板内重绘（启停乐观更新、轮询收敛）不会把列表甩回顶部，列表滚动容器在重绘前后被显式保存与写回。技能 Tab 里的分组栏（`#dsb-groups`）也单独记一份（`groups` 键），不会和技能卡列表互相覆盖。**市场** Tab 同样覆盖。
+
+> **每行列数**：技能列表「每行」可选 **3 / 4 / 5 / 6**，MCP 卡片可选 **3 / 4 / 5**（3 起步，技能 6 封顶、MCP 5 封顶）。原来的「自」自适应与 2 列已移除，旧值（`auto` / `0` / `2`）会自动归一到 3 列，不会出现空白列。
 
 ### 📂 技能浏览
 
@@ -62,10 +67,23 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 - **真实状态**：直接读 Cordis FiberState（pending / loading / active / failed），叠加 `disabled` 与已注册工具数
 - **工具清单与能力概括**：按 `mcp__<server>__` 前缀取工具与描述，按动词关键词自动归类（查询 / 执行 / 写配置 / 删除 / 导出 / 文件 / 会话）
 - **调用统计（落盘）**：监听 `tools/result`，按 `mcp__<server>` 归类写入 `~/.dsh/data/dsh-skill-browser/mcp-calls.jsonl`（3MB 自动压实），卡片显示累计 / 失败与最近调用
-- **启停 / 重连**：启停写入 profile `cordis.patch.yml` 末尾的受管块（幂等、**不重写整份 YAML、不丢中文注释**，改前自动备份）；重连走 Cordis Fiber 内存重启
+- **启停 / 重连**：启停写入 profile `cordis.patch.yml` 末尾的受管块（幂等、**不重写整份 YAML、不丢中文注释**，改前自动备份），点下开关即刻乐观跟手、随后每 700ms 轮询到运行时状态真正翻转为止（最多约 8.4 秒，仍未翻转会明确提示「稍后点刷新或彻底重启 DSH」，不再静默弹回）；重连走 Cordis Fiber 内存重启
+- **卸载**：从 profile 补丁文件里**真正删掉**该条 MCP —— 缩进感知定位 `- id: <name>` 块，连带清理上方专属注释与随之空掉的 `- insert:` 父级容器（避免留下 `insert: null` 让 loader 报错），并同步移除受管块里的同名 `disabled` 覆盖；改前自动备份到 `~/.dsh/backups/`（保留最近 20 份）。内置层 / npm 包自带的 MCP 没有补丁条目可删，会明确提示改用「停用」
 - **导出**：反解为 Claude Desktop / Cursor 同构的 `mcpServers` JSON，可打码敏感环境变量
 - **🔍 本机 MCP**：扫描 DSH 已配置 + 各 profile / 本地插件 / 全局 npm 里所有含 mcp 的包，列出「已配置 / 已装未配置」
 - **🛠 AI 修复**：诊断异常 MCP（启动失败 / 调用失败 / 已停用），规则 + AI 给出修复动作（reconnect / enable / disable / clean），确认后执行，改配置前自动备份
+
+### 🏠 MCP 市场
+
+- **双数据源**：① 官方 MCP Registry（`https://registry.modelcontextprotocol.io/v0/servers`，分页 `limit=100`，去重后约 600+ 个 server）；② 本地精选免费目录 `lib/market-curated.json`（29 条，npm 24 / pypi 5，全部包名已实盘验证存在），**精选优先并去重**
+- **缓存与刷新**：市场数据落盘 `~/.dsh/data/dsh-skill-browser/market.json`，24 小时有效；网络失败降级用旧缓存并标 `stale`，无缓存时只显示精选目录；需要立即取新数据时加 `?refresh=1` 强制刷新
+- **19 大类 + 树状/平铺**：文件系统 / 数据库 / 开发工具 / 网页与搜索 / 浏览器自动化 / 代码仓库 / 文档与办公 / 云服务与部署 / 通信与邮件 / 图像与多媒体 / 知识与记忆 / 任务与自动化 / AI 与智能体 / 金融与交易 / 地理与地图 / 教育与学习 / 运维与监控 / 安全与身份 / 其他，分类视图可切换**树状 / 平铺**
+- **卡片排布仿技能卡**：网格 / 列表双模式；列数 3~6 可选（`localStorage` 键 `dsb-home-cols`）；搜索框 300ms 节流；**「仅免费 / 全部」范围筛选**（默认仅免费）；已装条目标「已装 ✓」
+- **免费口径**：npm / pypi 本地可运行包 = 免费可装；只有远程 HTTP 的标「远程·需自备 Key」，不可直接安装
+- **安装流程**：点「安装」→ 需要环境变量（needsKey / envRequired）时先弹层填 Key → 后端把条目写进当前 profile 的 `cordis.patch.yml` 的 `- insert:` 块（**写前自动备份到 `~/.dsh/backups/`**）→ DSH 补丁层热重载生效
+- **Windows 启动方式**：npm 包用 `node.exe + npx-cli.js` 启动（stdio 走 spawn 不经 shell，直接写 `npx` 会失败）；pypi 包用 `uvx`；可执行文件路径**运行时探测**
+- **卸载与回滚**：复用 MCP 页的 `uninstallMcp` —— 缩进感知删除整条条目 + 清空壳 `- insert:` + 从受管块移除同名覆盖 + 写前备份；需要回滚就从 `~/.dsh/backups/` 取最近一份 `cordis.patch.yml`
+- **「已装」判定**：来自 MCP 页的 `serverName` 匹配（运行中 loader 条目名与市场条目名一致即标已装）
 
 ### 🎨 130 款皮肤（三球同步）
 
@@ -111,7 +129,7 @@ pnpm add dsh-skill-browser
 
 ## 适配版本
 
-- DSH 内核（`@deepseek-ai/dsh`）：**0.2.1-rc.3**（`package.json` 的 `engines.dsh` 已声明 `>=0.1.7-rc.1`）
+- DSH 内核（`@deepseek-ai/dsh`）：**0.2.2-rc.1**（`package.json` 的 `engines.dsh` 已声明 `>=0.1.7-rc.1`）
 - DSH 桌面端：**2.0.20-next**（DSH NEXT）
 - Node.js：`^22.19.0 || >=24.0.0`
 - 已在上述版本实测通过；低版本 `0.1.7-rc.1` 及以上兼容。
