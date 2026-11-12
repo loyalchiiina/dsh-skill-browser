@@ -25,6 +25,18 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 
 ## 功能一览
 
+### Card cache & faster startup (v2.1.0)
+
+- First open renders from `~/.dsh/data/dsh-skill-browser/cards-cache.json` instead of scanning the whole library; a silent background rescan refreshes it ~3s later.
+- Card details (SKILL.md body) load on demand; the list itself is a cached summary.
+- Click the refresh button in the library-path area (request `?refresh=1`) for a full rescan; run it before AI auto-classification / keyword grouping.
+- "Updated at" is the file mtime read **at scan time**, not a live watcher: it changes only after a scan (restart or manual refresh).
+
+### Deferred MCP startup (v2.1.0)
+
+- MCP servers listed in the MCP tab are started by a silent launcher (`mcp-launch.exe`, GUI subsystem, no console window) 15s after DSH boots, so multiple MCPs no longer stretch the boot time.
+- Wrapper: `~/.dsh/data/dsh-skill-browser/mcp-defer/mcp-<id>.cmd` (`ping -n 16 127.0.0.1 >nul` = 10s; change the number to tune).
+
 ### 🗂 五个 Tab
 
 | Tab | 内容 |
