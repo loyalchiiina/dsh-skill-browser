@@ -8,9 +8,9 @@
 
 > 📖 [Leer esta sección en el README principal](./README.md#功能)
 
-## 🎨 三球共享 128 皮肤
+## 🎨 三球共享 130 皮肤
 
-> 📖 [Leer esta sección en el README principal](./README.md#🎨-三球共享-128-皮肤)
+> 📖 [Leer esta sección en el README principal](./README.md#🎨-三球共享-130-皮肤)
 
 ## Highlights (English)
 
