@@ -1,13 +1,13 @@
 # dsh-skill-browser 🧩 技能浏览器
 
-> **功能描述**：技能与 MCP 浏览器：一个悬浮球五个页面。技能浏览（系统目录选库、两级分类加自定义分组、树状/平铺、手动/关键词/AI 分组且只发元数据、搜索、单卡或全库启停并自动备份）、调用台账（次数/成功率/趋势/排行）、MCP（真实 loader 配置与 Fiber 状态、工具与调用统计、启停即时跟随/重连/卸载/导出，并扫描未配置服务器做 AI 修复）、市场 · MCP 市场（官方 Registry + 29 条精选免费目录、19 大类平铺分类、网格/列表双模式、一键安装/卸载、仅免费筛选，与 MCP 页双向即时同步）、快速上手（9 步）；面板重绘不跳顶且关闭后记住上次滚动位置，卡片每行列数技能 3~6、MCP 3~5、市场 3~6。130 款皮肤在三颗悬浮球间同步。适配 DSH 内核 0.2.2-rc.1。
+> **功能描述**：技能与 MCP 浏览器：一个悬浮球四个页面 + 右上角 ? 快速上手帮助入口。技能浏览（系统目录选库、两级分类加自定义分组、树状/平铺、手动/关键词/AI 分组且只发元数据、搜索、单卡或全库启停并自动备份）、调用台账（次数/成功率/趋势/排行）、MCP（真实 loader 配置与 Fiber 状态、工具与调用统计、启停即时跟随/重连/卸载/导出，并扫描未配置服务器做 AI 修复）、市场 · MCP 市场（官方 Registry + 29 条精选免费目录、19 大类平铺分类、网格/列表双模式、一键安装/卸载、仅免费筛选，与 MCP 页双向即时同步）、右上角 ? 快速上手（9 步，点击展开/再点收起）；面板重绘不跳顶且关闭后记住上次滚动位置，卡片每行列数技能 3~6、MCP 3~5、市场 3~6。130 款皮肤在三颗悬浮球间同步。适配 DSH 内核 0.2.2-rc.1。
 >
-> **English**: Skills and MCP browser behind one floating ball with five tabs: Skills (native folder picker, two-level categories plus custom groups, tree or flat view, manual, keyword and AI grouping on metadata only, search, and per-card or whole-library enable/disable with timestamped backups), Call Ledger (counts, success rate, trend, ranking), MCP (live loader config, real Fiber states, per-server tools and call stats, instant enable/disable follow, reconnect, uninstall, export to mcpServers JSON, plus scan-and-AI-fix for unconfigured servers), Market (MCP market: official Registry plus a curated free catalog, 19 categories in flat mode, grid or list layout, one-click install/uninstall, free-only filter, two-way instant sync with the MCP tab) and Quick Start (9 steps). The panel never jumps back to the top on redraw and restores its scroll position when reopened. 130 skins sync across the three balls. Adapts DSH kernel 0.2.2-rc.1.
+> **English**: Skills and MCP browser behind one floating ball with four tabs plus a ? help entry at top right: Skills (native folder picker, two-level categories plus custom groups, tree or flat view, manual, keyword and AI grouping on metadata only, search, and per-card or whole-library enable/disable with timestamped backups), Call Ledger (counts, success rate, trend, ranking), MCP (live loader config, real Fiber states, per-server tools and call stats, instant enable/disable follow, reconnect, uninstall, export to mcpServers JSON, plus scan-and-AI-fix for unconfigured servers), Market (MCP market: official Registry plus a curated free catalog, 19 categories in flat mode, grid or list layout, one-click install/uninstall, free-only filter, two-way instant sync with the MCP tab) and a ? Quick Start help entry (9 steps, click to expand and collapse). The panel never jumps back to the top on redraw and restores its scroll position when reopened. 130 skins sync across the three balls. Adapts DSH kernel 0.2.2-rc.1.
 
 
 **把技能库变成看得见、搜得到、管得住的资产。**
 
-DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」字悬浮球，点开即**技能与 MCP 浏览器**面板（五个 Tab：技能浏览 / 调用台账 / MCP / 市场 · MCP 市场 / 快速上手）——技能库秒级浏览、树状/平铺双视图、手动 + 关键词 + AI 三种分组（AI 分组带**结果缓存**与**计时浮窗**）、调用台账看板、**MCP 管理**（真实配置 / 状态 / 工具 / 调用统计 / 启停即时跟随 / 重连 / 卸载 / 导出，外加**本机 MCP 扫描**与**AI 修复**）、**市场 · MCP 市场**（官方 MCP Registry + 29 条精选免费目录、19 大类平铺分类带每类数量、网格/列表双模式、卡片逐字复刻技能卡、每条 MCP 用其自身真实图标、一键安装写入 `cordis.patch.yml` 并自动备份 / 一键卸载、仅免费筛选、24 小时磁盘缓存、与 MCP 页双向即时同步）、**滚动位置记忆**（关掉再打开回到原处，启停轮询也不跳顶）、130 款三球同步皮肤。**分组只是视图归档，绝不移动任何技能文件；AI 分组只读元数据，绝不读正文、绝不改技能。**
+DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」字悬浮球，点开即**技能与 MCP 浏览器**面板（四个 Tab：技能浏览 / 调用台账 / MCP / 市场 · MCP 市场，右上角 ? 快速上手帮助入口）——技能库秒级浏览、树状/平铺双视图、手动 + 关键词 + AI 三种分组（AI 分组带**结果缓存**与**计时浮窗**）、调用台账看板、**MCP 管理**（真实配置 / 状态 / 工具 / 调用统计 / 启停即时跟随 / 重连 / 卸载 / 导出，外加**本机 MCP 扫描**与**AI 修复**）、**市场 · MCP 市场**（官方 MCP Registry + 29 条精选免费目录、19 大类平铺分类带每类数量、网格/列表双模式、卡片逐字复刻技能卡、每条 MCP 用其自身真实图标、一键安装写入 `cordis.patch.yml` 并自动备份 / 一键卸载、仅免费筛选、24 小时磁盘缓存、与 MCP 页双向即时同步）、**滚动位置记忆**（关掉再打开回到原处，启停轮询也不跳顶）、130 款三球同步皮肤。**分组只是视图归档，绝不移动任何技能文件；AI 分组只读元数据，绝不读正文、绝不改技能。**
 
 ![技能与 MCP 浏览器 · 01](docs/images/shot-01.png)
 ![技能与 MCP 浏览器 · 02](docs/images/shot-02.png)
@@ -37,17 +37,17 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 - MCP servers listed in the MCP tab are started by a silent launcher (`mcp-launch.exe`, GUI subsystem, no console window) 15s after DSH boots, so multiple MCPs no longer stretch the boot time.
 - Wrapper: `~/.dsh/data/dsh-skill-browser/mcp-defer/mcp-<id>.cmd` (`ping -n 16 127.0.0.1 >nul` = 10s; change the number to tune).
 
-### 🗂 五个 Tab
+### 🗂 四个 Tab + 右上角 ? 帮助入口
 
-| Tab | 内容 |
+| 入口 | 内容 |
 |---|---|
 | **技能浏览** | 搜索框 + 分组栏（树状/平铺、全部展开/收起、每行 N 列）+ 技能卡片墙（名称 / 中文简介 / 版本徽章 / 分类 / 修改时间 / 启停开关 / 移动到分组） |
 | **调用台账** | 统计卡 + 趋势图 + 技能调用排行 + 自动登记流水 |
 | **MCP** | MCP 服务器清单（状态 / 工具数 / 调用统计）+ 启停 / 重连 / 卸载 / 导出 + 🔍 本机 MCP 扫描 + 🛠 AI 修复 |
 | **市场 · MCP 市场** | 官方 MCP Registry + 精选免费目录（29 条）双数据源；19 大类平铺分类（带每类数量）；网格/列表双模式、列数 3~6；一键安装（写 `cordis.patch.yml` 并自动备份）/ 一键卸载；仅免费筛选；24 小时磁盘缓存 |
-| **快速上手** | 9 步图文引导，黑白线性图标，60 秒上手 |
+| **右上角 ?** | 快速上手：9 步图文引导，黑白线性图标，60 秒上手；点击展开、再点收起（不占 Tab 位） |
 
-> **滚动位置**：五个 Tab 各自记住上次停留的位置（`localStorage` 键 `dsb-scroll-v1`），关掉面板再打开直接回到原处；面板内重绘（启停乐观更新、轮询收敛）不会把列表甩回顶部，列表滚动容器在重绘前后被显式保存与写回。技能 Tab 里的分组栏（`#dsb-groups`）也单独记一份（`groups` 键），不会和技能卡列表互相覆盖。**市场** Tab 同样覆盖。
+> **滚动位置**：四个 Tab 与 ? 快速上手各自记住上次停留的位置（`localStorage` 键 `dsb-scroll-v1`），关掉面板再打开直接回到原处；面板内重绘（启停乐观更新、轮询收敛）不会把列表甩回顶部，列表滚动容器在重绘前后被显式保存与写回。技能 Tab 里的分组栏（`#dsb-groups`）也单独记一份（`groups` 键），不会和技能卡列表互相覆盖。**市场** Tab 同样覆盖。
 
 > **每行列数**：技能列表「每行」可选 **3 / 4 / 5 / 6**，MCP 卡片可选 **3 / 4 / 5**（3 起步，技能 6 封顶、MCP 5 封顶）。原来的「自」自适应与 2 列已移除，旧值（`auto` / `0` / `2`）会自动归一到 3 列，不会出现空白列。
 
@@ -104,9 +104,9 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 - 与 dsh-todo-float-ball / dsh-font-enhancer 共享同一套皮肤系统，任一处切换三个悬浮球与面板实时同步
 - 内置「跟随系统（深/浅自动）」+ 官方深色 + 官方浅色等 130 款，全部面板控件按当前皮肤**实算对比度**配色，浅色主题 WCAG 达标
 - 皮肤菜单 **8 列宽屏布局**，130 款一屏尽览；设置页提供「三球皮肤同步」开关
-- 头部按钮基本为**黑白线性 SVG 图标**（皮肤 / 设置 / 热重载 ⚡ / 刷新 ↻ / 关闭 / GitHub Star），检查更新按钮用 **↑ 字符**（`&#8593;`），任何皮肤下清晰可读
+- 头部按钮基本为**黑白线性 SVG 图标**（右上角第一个为 **?** 快速上手帮助入口，其后依次为皮肤 / 设置 / 热重载 ⚡ / 刷新 ↻ / 关闭 / GitHub Star），检查更新按钮用 **↑ 字符**（`&#8593;`），任何皮肤下清晰可读
 
-### 📖 快速上手（9 步，黑白线性图标）
+### 📖 快速上手（右上角 ? 入口，9 步，黑白线性图标）
 
 1. **选技能库位置**（第一步）→ 设置 → 选择文件夹 → 保存自动重扫
 2. **刷新** 让新技能进列表 → 不重启 DSH 立即生效再点**热重载 ⚡**（顺序：先选库 → 再刷新 → 最后热重载）
