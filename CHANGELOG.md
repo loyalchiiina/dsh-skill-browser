@@ -1,5 +1,1084 @@
 # Changelog
 
+## 2.2.49 (2026-11-25) — 会话栏列出已注入 MCP 的彩色胶囊（悬停看详情）
+
+> **追加修复（同版本）**：MCP 页总开关（全部 MCP N 项）点击后不自动刷新、滑块停在旧状态的 bug。
+> 根因：技能页 `toggleSkill` 采用乐观更新（请求前翻本地 `disabled` 并立即重绘），而 `doMcpBatch` 原来要等宿主 `/mcp/servers` 回包才刷新，宿主缓存未更新时滑块就不动。
+> 修法：`doMcpBatch` 请求前按 `need` 乐观写 `M.data.servers[].disabled = !enable` 并立即 `paintMcp()`（16ms 防抖）；请求级失败/网络异常逐项回滚到点击前状态；成功后 `loadMcp(true)` 仍以宿主真值覆盖。
+> 验证：抽取真实函数体 + 依赖桩实测——点击瞬间 disabled 全翻、`paintMcp` 立即调用 1 次、服务器 300ms 不回包仍保持新状态；失败路径还原到点击前。对照图 `docs/measure/slider-fix-before-after.png`（本轮工作区 `slider-before-after.png` 的交付副本）。
+> 生效方式：客户端 bundle（`lib/client.js`），Junction private 包未接入 HMR → **必须彻底退出 DSH 再启动**（Ctrl+R / Ctrl+Shift+R 均不重新读盘）。
+>
+> **追加修复 2（同版本）**：MCP 页工具条按钮选中态固定蓝、与技能页/市场页紫粉皮肤不一致。
+> 根因：`.dsb-tab-on` / `.dsb-chip-on` / `.dsb-home-*.on` 都走 `var(--dsb-onbrand-bg1/bg2)` 皮肤变量，唯独 `.dsb-mcp-btn` / `.dsb-mcp-btn.primary` 没进 `skinPanelCss()` 注入层，基础 CSS 的硬编码 `#5b6cff→#2fa8ff` 一直生效。
+> 修法：`skinPanelCss()` 内补 `.dsb-mcp-btn`（普通态接 `var(--chipBg)/var(--ptx)/var(--pbd)`）与 `.dsb-mcp-btn.primary`（渐变接 `var(--dsb-onbrand-bg1/bg2)` + 同款 box-shadow），与技能/市场页同口径。
+> 对照图 `docs/measure/skin-unify-before-after.png`。
+>
+> **追加修复 3（同版本）**：悬浮球导航设置页两处——①「作者插件」清单只有 13 项，缺 产物联动 / 团队编排 / 侧栏播放器 / 视频墙 4 项（均与「插件版本」tab 同源作者包），补全为 17 项；包 `dsh-piliaurora-wall` 中文名原误写「极光壁纸」，按 npm 实际描述（PiliAurora 视频墙，B站视频并行开窗）改为「视频墙」。4 项下载量取 npm API 近 30 天真实值（4905/2404/1778/430）。②「插件版本」tab 三列无表头，用户分不清箭头左右哪个是本机——补同结构列头「插件 / 本地已装 / npm 最新 / 状态 / 操作」，本地列 title=读本机 package.json，npm 列 title=registry 最新版。对照图 `docs/measure/verheader-authorlist-before-after.png`。
+> **追加修复 4（同版本）**：「作者插件」tab 与「插件版本」tab 两份清单顺序/内容不一致（新增项插在不同位置、插件版本页缺技能守卫）——统一为 17 项严格同序同名，插件版本页补「技能守卫」。机器断言脚本核验 PASS（两页包名序列逐项相等）。对照图 `docs/measure/list-order-before-after.png`。
+> **追加修复 5（同版本）**：选中态字体/背景的静态兜底也统一到皮肤变量——基础 CSS 里 `.dsb-chip-on` / `.dsb-mcp-btn.primary` / `.dsb-sortbtn-on` 三处原硬编码 `linear-gradient(135deg,#5b6cff,#2fa8ff)` + `color:#fff`，改为 `var(--dsb-onbrand-bg1/bg2)` + `var(--dsb-onbrand,#fff)`，与皮肤注入层同口径，即使 applySkinNow 注入延迟也不退回固定蓝白字。Playwright 实测赛博机能皮肤下三页选中态 computed color 全为 `rgb(18,21,28)`（近黑）、背景同为青粉渐变，未选中态保持原色。
+> ⚠️ 用户反馈"没变"的机器根因：client.js mtime=10:50，官方版 DeepSeek Harness 进程启动=10:42（早 8 分钟）——客户端未加载新 bundle，非代码问题，需彻底退出 DSH 再启动。
+> **追加修复 6（同版本）**：选中态字色统一为深色（选中/未选中要有区分）——「树状/平铺」选中后和未选中一样看不清。根因：`.dsb-gbar .dsb-gadd-on`（树状/平铺）CSS 写死 `color:#fff!important`，而皮肤引擎 `semanticVarsCss()` 对赛博机能亮渐变算出 `#12151c` 深字给「网格/全部128项/卡片」，导致同是选中态一组深字一组白字。修法：把写死的 `#fff` 改为 `var(--dsb-onbrand,#fff)`，与三页同口径；赛博机能下选中态统一深字 `#12151c`（青粉渐变对比度 5.27≥4.6），未选中保持浅字。注意：中途曾误判为「统一白字」并改过引擎，已回退，最终口径=按对比度自动选（亮渐变深字/深渐变白字）+ 树状平铺跟随同一变量。Playwright 实测选中态 computed color 全 `rgb(18,21,28)`、未选中 `rgb(201,231,245)`。对照图 `docs/measure/deep-font-before-after.png`。
+
+用户要求：注入的时候在会话栏显示被注入的 MCP 名称，用彩色胶囊，鼠标悬停显示 MCP 内容。
+
+### 实现
+`paintMcpNow()` 里按 `M.sessionOn[id] === true` 收集已注入列表，逐个渲染胶囊：
+
+```js
+var _palette = ['#5b6cff','#34d399','#fbbf24','#f472b6','#38bdf8','#a78bfa','#fb923c','#4ade80'];
+// 每个胶囊：文字=serverName，颜色从调色板轮转，边框/底色用同色 45% / 14% alpha
+// title = 名称 · transport · 工具数 + 用途摘要 + 是否仅本对话放行 + 操作提示
+```
+
+胶囊样式（新增 `.dsb-sess-pills` / `.dsb-sess-pill`）：
+- 内联弹性、间距 5px、圆角 20px、10.5px 半粗体、`cursor:help`
+- 单个胶囊 `max-width:130px` + 省略号，胶囊组 `overflow:hidden`，防止长名字把会话栏撑爆
+- 右侧提示文字随状态切换：有注入 → 「悬停胶囊看详情」；无注入 → 原「在卡片底部点…切换」
+
+### 悬停内容（title，多行用 &#10;）
+```
+ansys-fluent-mcp · stdio · 18 个工具
+控制 Fluent：设置查询与修改、网格质量、截图、仿真报告
+（进程未加载，仅本对话放行）        // 仅当 disabled
+点击卡片底部「注入 / 不注入」可单独开关
+```
+
+对照图：`docs/measure/sess-before-after.png`。
+
+---
+
+## 2.2.48
+ (2026-11-25) — 卡片按钮行按列数均匀分布
+
+用户反馈：中间三个按钮拥挤，要求按列数均匀分布。
+
+### 根因
+`.dsb-mcp-acts` 是 `justify-content:flex-start` + `.danger{margin-left:auto}`：
+前 5 个控件挤在左边（gap 只有 5px），靠 auto margin 把卸载顶到最右（最后一段 gap 22.3px）。
+5 列时更糟：flex 换行成 4+2，第一行右侧还留 28.2px 空白，第二行 导出 与 卸载 之间裂开 97.2px。
+
+### 改法（两档，按卡片实际内容宽切换）
+```css
+/* 宽卡片（3 列，content 277px）：一行 6 控件等距铺满 */
+.dsb-mcp-acts{justify-content:space-between; gap:6px}
+.dsb-mcp-btn.danger{margin-left:0}
+
+/* 窄卡片（≤230px，即 4~5 列）：3×2 网格，每格等宽 */
+@container (max-width:230px){
+  .dsb-mcp-acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:4px;row-gap:4px}
+  .dsb-mcp-acts>.dsb-mcp-btn{width:100%;padding:3px 0}
+  .dsb-mcp-acts>.dsb-mcp-valve-btn{width:100%;justify-content:center}
+}
+```
+
+### 实测（量相邻控件间隙）
+
+| 列数 | 改前 | 改后 |
+|---|---|---|
+| 3 列 | `5 / 5 / 5 / 5 / 22.3`（不均） | `8.5 / 8.5 / 8.5 / 8.5 / 8.5`（全等） |
+| 5 列 | 4+2 断行，右留 28.2px；第二行裂 97.2px | 3+2 网格，两行 `4 / 4`，左右都填满 |
+
+对照图：`docs/measure/acts-before-after.png`（3 列 / 5 列 × 改前改后，四格）。
+
+---
+
+## 2.2.47
+ (2026-11-25) — 总开关移到工具条最左、删「刷新」、按钮行不换行
+
+### ① 滑块挪到顶部，替代原来的统计文字
+原来工具条第一行是 `共 10 个 MCP · 已连接 1 个 · 工具 1 个`，总开关吊在整行末尾。
+现在顺序反过来：**滑块在最左**（`全部 MCP 10 项`），统计信息挂到滑块的 `title` 上（悬停可见，含已加载数）。
+
+### ② 删除工具条里的「刷新」按钮
+面板右上角本来就有刷新图标，重复。注意：加载失败时那个「重试」按钮仍保留（它也是 refresh 动作），
+handler 的 `refresh` 分支不动。
+
+### ③ 这一行不再折行
+```css
+.dsb-mcp-top{flex-wrap:nowrap; overflow-x:auto; gap:6px; scrollbar-width:none}
+.dsb-mcp-top>.dsb-mcp-btn{flex:0 0 auto}
+.dsb-mcp-top>.dsb-switch{flex:0 0 auto}
+```
+940px 面板实测：整行 37px 高、横向滚动量 0 —— 全部 11 个控件一行放得下；
+面板被压窄时（720px）改为横向滚动而不是折行，滚动条隐藏不影响观感。
+
+---
+
+## 2.2.46
+ (2026-11-25) — 总开关外观与技能页逐像素一致（取消半开态）
+
+### 实测对比（同一页、同一缩放、4x 截图）
+
+| 属性 | 技能页 `全部技能 127 项` | MCP `全部 MCP 10 项` |
+|---|---|---|
+| 轨道 | 34×18 | 34×18 |
+| 轨道底色 | rgb(39,174,96) | rgb(39,174,96) |
+| 圆点 | 14px @ left 18px | 14px @ left 18px |
+| 文字 | 11px rgb(159,224,181) | 11px rgb(159,224,181) |
+
+→ `IDENTICAL_STYLE: true`
+
+### 为什么之前「长得不一样」
+2.2.45 已经把结构/类名换成技能页那套，但 MCP 有「部分启用」态（1/10），走的是 `.dsb-sw-half`：
+琥珀色文字 + 轨道左灰右绿渐变。技能页当时是 127/127 全开，走 `.dsb-sw-on`：绿轨道 + 绿字。
+同一套规则、不同状态 → 看起来像两个控件。
+
+本轮把总开关收敛成**两态**（和用户给的参照图一致）：
+- 有任意 MCP 在加载 → `dsb-sw-on`：绿轨道、圆点在右、绿字
+- 全部关闭 → 无状态类：灰轨道、圆点在左、灰字
+
+「已加载几个」不再用颜色表达，改放 title（`1 / 10 个 MCP 已加载进 DSH…`），标签只显示总数，
+文字格式与技能页对齐：`全部 MCP 10 项` / `全部技能 127 项`。
+
+---
+
+## 2.2.45
+ (2026-11-25) — 总开关滑块改用技能页同一套；滚动条挪到面板右缘
+
+### ① 总开关滑块：不再自造样式，直接复刻技能页的聚合滑块
+技能页的滑块由 `aggSwitchHtml()` 生成，结构是**轨道在前、标签在后**，类名 `dsb-switch dsb-sw-agg`。
+上一版我自己写了一版（`总开关 [轨道] 状态文字`，还加了 `.dsb-mcp-master` 自定义样式），长得不一样。
+现在完全复刻：
+
+```html
+<label class="dsb-switch dsb-sw-agg dsb-sw-half" data-mcp-act="enableAll">
+  <span class="dsb-sw-track"><span class="dsb-sw-thumb"></span></span>
+  <span class="dsb-sw-label">总开关 3 / 10</span>
+</label>
+```
+
+自定义 `.dsb-mcp-master` 样式已全部删除，尺寸/配色/半开渐变全部继承既有规则。
+
+### ② 滚动条挪到面板最右边（和技能列表一致）
+技能页的 16px padding 长在滚动容器 `.dsb-cards` 上，所以滚动条正好落在面板边缘；
+MCP 原来把 16px 长在外层 `.dsb-mcp` 上，滚动条被挤进里面 16px —— 这就是「没挪」的原因。
+
+```css
+/* 之前 */ .dsb-mcp{padding:0 16px 14px}   .dsb-mcp-grid{padding:6px 0 0}
+/* 现在 */ .dsb-mcp{padding:0}              .dsb-mcp-grid{padding:6px 16px 14px}
+```
+16px 改为由 `.dsb-mcp-top`（工具条）、`.dsb-sess-bar`（会话栏）、`.dsb-mcp-grid`（卡片区）、
+`.dsb-mcp-tree`（树状）、`.dsb-mcp-exportwrap`（导出框）、`.dsb-mcp-residue`（残留面板）各自携带。
+
+### 实测
+- 网格右缘 941px = 面板右缘 942px → **滚动条贴面板边缘**（之前差 16px）
+- 卡片左边距 17px / 右边距 17px
+- 花括号 429/429 平衡
+
+---
+
+## 2.2.44
+ (2026-11-25) — 总开关改成滑块，删掉「只留可用的」
+
+### ① 两个总开关按钮 → 一个开关滑块
+原工具条上有两个按钮：`⏻ 总开关关闭 (N)` / `⚡ 总开关开启 (N)`，语义上是同一个开关的两个动作，
+现在合并成一个滑块（复用面板既有 `.dsb-switch` 骨架）：
+
+| 状态 | 轨道 | 圆点 | 文字 |
+|---|---|---|---|
+| 全部关闭 | 灰 #555 | left 2px | 关闭 |
+| 部分开启 | 灰→绿渐变（`.dsb-sw-half`） | left 10px（居中） | 部分 N/总数（琥珀色） |
+| 全部开启 | 绿 #27ae60 | left 18px | 开启 N（绿色） |
+
+点击行为沿用原动作：未全开 → `enableAll`（全部加载进 DSH）；已全开 → `disableAll`。
+`role="switch" aria-checked` 与 title 提示（含「不影响各对话的注入阀门」）都保留。
+
+实测三种状态圆点偏移：2px / 10px / 18px，与轨道 34×18 匹配。
+
+### ② 删除「◎ 只留可用的」
+按钮、点击分支一并移除；`doMcpEnableOnlyActive()` 函数保留（无入口调用），便于将来做批量策略时复用。
+
+---
+
+## 2.2.43
+ (2026-11-25) — MCP 网格完全对齐「技能列表」口径
+
+用户要求：照技能浏览列表的做法居中/左右对齐。于是把两个页签的度量都量出来对齐。
+
+### 实测对照（面板 940px，均 5 列）
+
+| 项目 | 技能列表 `.dsb-cards` | MCP 修复前 | MCP 修复后 |
+|---|---|---|---|
+| 水平 padding | 16px | 16px（在父层） | 16px |
+| 列间距 gap | 8px | 10px | **8px** |
+| 卡片左距 | 17px | 17px | 17px |
+| 卡片右距 | 17px | **27px**（多了滚动条槽） | **17px** |
+
+上一版用 `scrollbar-gutter:stable both-edges` 把右边距顶到 27px，虽然对称但和技能列表不一致。
+技能列表的解法是：**padding 留在滚动容器外层**，滚动条只压缩内容宽度、不侵占 padding，
+所以有没有滚动条，卡片到面板的左右间距都是 16px（+1px 边框）。本轮改成同一套。
+
+### 具体改动
+```css
+/* 之前 */ .dsb-mcp-grid{ gap:10px; padding:4px 0 8px; scrollbar-gutter:stable both-edges }
+/* 现在 */ .dsb-mcp-grid{ gap:8px;  padding:6px 0 0;   }
+```
+水平 16px 仍由 `.dsb-mcp` 提供（上一版已补 `box-sizing:border-box`，不再溢出）。
+
+### 验收（3/4/5 列）
+- 左右边距 **17 / 17**，与技能列表实测值完全相同
+- 3 列：6 控件单行；4 列：单行；5 列：稳定两行，卸载贴末行右
+- 同一行卡片等高、卸载 y 差 0；花括号 427/427
+
+---
+
+## 2.2.42
+ (2026-11-25) — 卡片左右边距不对称（右侧贴边/被裁）
+
+用户反馈：卡片距面板两侧应一致，实际左边宽、右边贴边甚至被裁。
+
+### 根因（playwright 实测）
+`.dsb-mcp` 同时有 `width:100%` 与左右各 16px 的 `padding`，但**没有 `box-sizing:border-box`**：
+实际宽度 = 面板宽 + 32px → 右侧被面板的 `overflow:hidden` 裁掉。
+
+实测（面板 942px，20 张卡片）：
+
+| 指标 | 修复前 | 修复后 |
+|---|---|---|
+| `.dsb-mcp` 右溢出 | -31px | 0 |
+| 卡片左距面板 | 23px | 27px |
+| 卡片右距面板 | **-9px**（戳出面板） | 27px |
+
+### 修复
+1. `.dsb-mcp` 加 `box-sizing:border-box`（保留 width:100% 兜底）
+2. `.dsb-mcp-grid` 加 `scrollbar-gutter:stable both-edges` —— 真实 Electron 里滚动条占 11px，
+   只占右侧会让左右间距再次不等；both-edges 两侧对称预留，有无滚动条都一致
+3. 网格左右 padding 由 6px 收到 0（避免叠加后内缩过多），最终两侧各 27px
+
+### 验收（3/4/5 列 × 覆盖式/经典滚动条 两种模式）
+- 左右边距 27 / 27，完全对称（两种滚动条模式都一致）
+- 3 列、4 列：6 个控件单行；5 列：稳定两行，卸载贴末行右
+- 同一行卡片等高、卸载 y 坐标差 0
+- 花括号 427/427 平衡
+
+---
+
+## 2.2.41
+ (2026-11-25) — 不再靠猜：用 playwright 实测把三条反馈全部量到像素
+
+前几轮都在读代码猜原因，这次把面板的 `PANEL_CSS` 原样抽出来灌进独立页面，用真实 Edge 渲染 + 量盒子。
+面板真实宽度是 `min(940px,94vw)`（不是窗口宽），卡片内容框实测：3 列 277px / 4 列 199px / 5 列 152px。
+
+### 实测暴露的真问题
+| 版本 | 3 列 | 4 列 | 5 列 |
+|---|---|---|---|
+| 2.2.40（nowrap + overflow:hidden） | 正常 | 按钮压到 20px | **溢出卡片 5.4px，文字被切** |
+| 2.2.41 | 一行 6 控件 | 一行 6 控件 | 稳定两行、卸载贴末行右 |
+
+另外发现两个隐藏变量：
+1. `@container` 块少写一个 `}`，把后面所有基样式吞进容器查询 —— 3 列时滑块直接消失（已修，花括号 427/427 平衡）
+2. 「注入」22px / 「不注入」33px 标签宽度不同 → 同一行卡片换行点不一致 → 卸载有的折行有的不折。
+   已给标签 `min-width:33px` 定宽，彻底消除该变量。
+
+### 最终实现
+```css
+.dsb-mcp-acts{flex-wrap:wrap; margin-top:auto}          /* 贴底 + 允许换行，不用 overflow:hidden */
+.dsb-mcp-acts .dsb-mcp-btn.danger{margin-left:auto}     /* 卸载永远贴右 */
+.dsb-mcp-card{container-type:inline-size}
+@container (max-width:300px){ ...按钮 10.5px/padding 3px 5px }
+@container (max-width:230px){ ...按钮 10px/padding 3px 2px, gap 3, 隐藏滑块文字 }
+```
+滑块骨架与位移仍写在同一个自包含块里，颜色改用皮肤变量 `var(--dsb-soft,#555)` / `var(--ptx,#fff)` / `var(--stD,#27ae60)`，换肤时跟着走。
+
+### 实测结论（3 列 / 4 列 / 5 列全部通过）
+- 滑块圆点：开启 `left:18px`、关闭 `left:2px`（三种列数一致）
+- 溢出：0（无横向滚动、无文字被切）
+- 卸载：右距卡片边 13px、下距卡底 12px —— 每一行每张卡片完全相同（dangerTopSpread = 0）
+- 同一行卡片等高（hSpread = 0）
+
+---
+
+## 2.2.40
+ (2026-11-25) — 对照历史版本回改：我确实删多了
+
+用户质疑「以前是好的，你是不是删多了」——对照 12 个历史备份逐版核查后**属实**。
+
+### ① 找到被删掉的关键一行
+`.dsb-mcp-acts` 在第一代就有 `margin-top:auto`：
+
+| 版本 | margin-top:auto |
+|---|---|
+| 2.0.6 ~ 2.0.7（含 replica-skill / clean-row-css） | 有，按钮行贴卡片底 |
+| 当前 2.2.3x | **丢失** |
+
+后果：按钮行跟着内容走，简介长短不同 → 卡片高矮不齐 → 「卸载」不在一条线、整体观感像被踩过。
+v2.0.4 的注释白纸黑字写着「与技能卡 .dsb-card-foot 同口径（margin-top:auto + padding-top:8px + space-between）」，
+后来某次改写只保留了 padding-top，margin-top:auto 被吃掉。**已恢复**。
+
+### ② 同时回退我前几轮自作主张加的东西
+- `.dsb-mcp-card` 的 `height:100%`：原版没有，反而可能在 CSS Grid 下撑出单元 → 已删
+- `.dsb-mcp-grid`：回到原版 `repeat(auto-fill,minmax(300px,1fr))` + `gap:10px`，
+  只补回 `overflow-x:hidden` 与两侧 6px 内边距，防止卡片边框贴到滚动条
+
+### ③ 保留的修复（这几条是本轮反馈的真问题）
+- 阀门滑块：骨架 + 位移写进同一个自包含规则块（`.on` 与 `[data-sess-on="1"]` 双命中）
+- 按钮行 `flex-wrap:nowrap` + 卸载 `margin-left:auto` 贴右
+- `.dsb-mcp-grid` 补进 `scrollbar-width:thin` 清单，不再用 17px 系统滚动条压住右列
+
+---
+
+## 2.2.39
+ (2026-11-25) — 滑块自包含 + 按钮不折行 + 卡片边界
+
+用户三点反馈（附图 1226×619，5 列卡片）：滑块还是不生效、卡片边界被裁减、卸载按钮不在一条线。
+
+### ① 滑块：骨架和位移写进同一个规则块
+2.2.32 的段被整块替换掉、2.2.37 只补回 `left`、2.2.38 补的骨架又和位移隔了几百行。
+本轮把 `.dsb-mcp-valve-btn` 专用滑块整体迁到「滑动开关」块之后，每条都带 `!important`，
+轨道 34×18 胶囊 + 圆点 14×14 绝对定位 + `left` 2px ⇄ 18px 过渡，点击与重绘双路径都能命中。
+
+### ② 按钮：卸载统一贴右、永不折行
+原来 `.dsb-mcp-acts` 是 `flex-wrap:wrap; justify-content:flex-start`。5 列时卡片很窄，
+滑块+标签占掉一半宽度后「详情/导出/卸载」被挤到第二行；每张卡片简介长短不同 → 换行位置不同 →
+卸载一会儿在上一行、一会儿在下一行，视觉上就是「不在一条线」。
+
+修复：`flex-wrap:nowrap`、滑块 `flex:0 0 auto`、普通按钮 `flex:0 1 auto`（可压缩）、
+卸载 `flex:0 0 auto; margin-left:auto`（贴右），并给卡片加 `height:100%`（grid 同行等高）+ 简介限 2 行。
+
+### ③ 卡片边界被裁
+`.dsb-mcp-grid` 原先漏在滚动条美化清单外，用的是系统默认滚动条（约 17px），右列卡片的边框
+和「卸载」按钮被压在滚动条底下。现已把 `.dsb-mcp-grid` 加进 `scrollbar-width:thin` 清单。
+
+### ④ 已知局限
+每行 5 列且面板很窄（单卡 < 约 200px）时，中文按钮会收缩内边距；极端窄屏建议切「每行 3 / 4」。
+
+---
+
+## 2.2.38
+ (2026-11-25) — 滑块圆点位移真正生效（补齐骨架 CSS）
+
+### ① 上轮 2.2.37 为什么还是不动
+2.2.37 补的是 `left:18px` **位移**规则，但阀门是 `<button class="dsb-mcp-valve-btn">`，
+它不匹配 `.dsb-switch` 前缀的骨架规则，所以 `.dsb-sw-track` / `.dsb-sw-thumb` 在这里**根本没有骨架**：
+
+- 没有 `width/height`（轨道塌成 inline 尺寸，圆点撑开）
+- 圆点不是 `position:absolute`，`left` 对静态定位元素在 inline 布局里不产生位移
+
+结果：点击后轨道背景变绿（颜色规则生效），圆点却始终贴在左边 —— 与用户反馈完全一致。
+
+### ② 修复
+在 v2.2.37 的规则块前面按 `.dsb-switch` 同一套数值补全骨架：
+
+```css
+#dsh-skill-browser-panel .dsb-mcp-valve-btn .dsb-sw-track{position:relative;display:inline-block;
+  width:34px;height:18px;border-radius:999px;background:#555;transition:background .2s;flex:none}
+#dsh-skill-browser-panel .dsb-mcp-valve-btn .dsb-sw-thumb{position:absolute;top:2px;left:2px;
+  width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:left .2s}
+```
+
+位移与开启态配色沿用 2.2.37 的双选择器（`.on` + `[data-sess-on="1"]`），并把轨道绿统一成技能滑块的 `#27ae60`，
+开启态标签 `#9fe0b5`，关闭态 `#555`，与面板内其它滑块观感一致。
+
+### ③ 副作用检查
+- 仅作用于 `.dsb-mcp-valve-btn` 后代，不影响 `.dsb-switch` 自带滑块（同数值，无样式冲突）
+- `.on` 与 `[data-sess-on="1"]` 在渲染与点击路径都会同步写入，二者任一命中即位移
+
+---
+
+
+## 2.2.37 (2026-11-25) — 滑块圆点真正位移（双选择器 + !important）
+
+### ① 问题
+用户反馈：开启时滑块的**圆点没有移动**，只有文字变色。
+「开启的滑块式移动」——要的是圆点从左滑到右。
+
+### ② 原因
+v2.2.32 写的位移规则是：
+
+```css
+#dsh-skill-browser-panel .dsb-mcp-valve-btn.on .dsb-sw-thumb { left:18px }
+```
+
+它依赖 `.on` 类名。类名切换存在竞态：
+- 渲染时由 `_sOn` 决定是否带 `on`（静态正确）
+- 点击时由 JS 手动 `classList.add("on")`（动态）
+- `paintMcp()` 重绘会重建 DOM，中间的时序可能丢失该类
+
+更稳的锚点是**渲染时就写死的 `data-sess-on` 属性**。
+
+### ③ 修复（双保险 + 提高优先级）
+```css
+#dsh-skill-browser-panel .dsb-mcp-valve-btn.on .dsb-sw-thumb,
+#dsh-skill-browser-panel .dsb-mcp-valve-btn[data-sess-on="1"] .dsb-sw-thumb { left:18px !important }
+
+#dsh-skill-browser-panel .dsb-mcp-valve-btn.on .dsb-sw-track,
+#dsh-skill-browser-panel .dsb-mcp-valve-btn[data-sess-on="1"] .dsb-sw-track { background:#2ecc71 !important }
+```
+
+- **属性选择器** `[data-sess-on="1"]`：渲染时字符串写死，不依赖运行时类操作
+- **类名选择器** `.on`：点击即时反馈用
+- **`!important`**：压过基础 `.dsb-sw-thumb{left:2px}`
+
+### ④ 几何核对
+| 项 | 值 |
+|---|---|
+| 轨道宽 × 高 | 34px × 18px |
+| 圆点宽 × 高 | 14px × 14px |
+| 关闭位置 | `left:2px`（左内边距） |
+| 开启位置 | `left:18px`（34 - 14 - 2 = 18，正好贴右）|
+
+滑动距离 16px，`transition:left .2s` 驱动动画。
+
+### ⑤ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.36 (2026-11-25) — 照抄技能卡片的列数实现（不再自创公式）
+
+### ① 用户对比两张图后的真问题
+技能浏览的卡片（每行 3/4/5/6）排布正常，MCP 卡片不正常。
+逐行对比源码后找到差别：
+
+| 项 | 技能卡片 `paintCards` L5222 | MCP（修前） |
+|---|---|---|
+| 列数落地方式 | **内联 style 一行赋值** | CSS 选择器 + `--dsb-cols` 变量 |
+| 公式 | `repeat(N, minmax(0,1fr))` | `repeat(auto-fit, minmax(calc((100% - 16px)/3),1fr))` |
+| `!important` | 不用 | 用了 |
+| calc 除法 | **没有** | **有**（v2.2.35 已因 var 作除数失效） |
+
+```js
+// 技能（原版，一直正常工作）
+box.style.gridTemplateColumns = S.cardCols ? ("repeat(" + S.cardCols + ",minmax(0,1fr))") : "";
+```
+
+### ② 修复：直接照抄这一行
+```js
+h += '<div class="dsb-mcp-grid"' +
+  (M.cols ? ' style="grid-template-columns:repeat(' + M.cols + ',minmax(0,1fr))"' : '') + '>';
+```
+- 删除 v2.2.35 那三条 `--dsb-cols` 穷举 CSS 规则（不再需要）
+- 不用 `!important`、不用 CSS 变量、不做 calc 除法
+- 基础 CSS 与 `.dsb-cards` 完全一致：
+  `repeat(auto-fill, minmax(280px,1fr))` + `gap:8px` + `padding:6px 0 8px`
+
+### ③ 为什么之前会「粘连 / 溢出」
+自创公式连踩两坑：
+1. v2.2.34：`calc(... / var(--dsb-cols))` —— 除数是变量，整条 calc **静默失效**
+2. v2.2.35：改穷举字面量，但列宽用百分比 + `auto-fit`，
+   与 `repeat(N)` 语义不同，容器宽度变化时表现不一致
+
+而原版的 `repeat(N, minmax(0,1fr))` 简单直接：
+硬 N 列等分，`minmax(0,…)` 允许内容收缩不溢出。**原版方案本来就是对的。**
+
+### ④ 复盘（方法论级）
+用户说「参考技能浏览的列表布局」时，我以为是「视觉对齐」，
+于是重写了公式。实际他要的是「**照抄能工作的实现**」。
+正确做法：**先读参照对象的源码，逐行照搬，而不是重新推导一遍公式。**
+重新推导 = 重复踩别人已经踩完的坑。
+
+### ⑤ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.35 (2026-11-25) — 修「卡片粘连无间隙」+ 对齐技能列表布局
+
+### ① 根因（CSS calc 的硬规则）
+v2.2.34 写成：
+
+```css
+minmax(calc((100% - (var(--dsb-cols) - 1) * 10px) / var(--dsb-cols)), 1fr)
+```
+
+**问题**：CSS `calc()` 的**除数必须是数字字面量**。
+`var(--dsb-cols)` 展开后是字符串 `"3"`，不能作为除数参与运算 →
+**整条 calc 失效** → `minmax()` 退化为无效值 → 列宽不成立 →
+卡片按内容收缩并紧贴，gap 也失去意义。
+
+### ② 修复：三档穷举（3/4/5 只三档，穷举最稳）
+```css
+[style*="--dsb-cols:3"] { grid-template-columns: repeat(auto-fit, minmax(calc((100% - 16px) / 3), 1fr)) !important; gap:8px }
+[style*="--dsb-cols:4"] { grid-template-columns: repeat(auto-fit, minmax(calc((100% - 24px) / 4), 1fr)) !important; gap:8px }
+[style*="--dsb-cols:5"] { grid-template-columns: repeat(auto-fit, minmax(calc((100% - 32px) / 5), 1fr)) !important; gap:8px }
+```
+三条规则里的除数都是**字面量**（3/4/5），calc 正常求值。
+
+### ③ 布局对齐技能列表（用户要求「参考技能浏览的列表布局」）
+逐项对齐 `.dsb-cards`：
+
+| 属性 | 技能 `.dsb-cards` | MCP（修前） | MCP（修后） |
+|---|---|---|---|
+| 列宽基准 | `minmax(280px,1fr)` | `minmax(300px,1fr)` | **`minmax(280px,1fr)`** |
+| gap | `8px` | `10px` | **`8px`** |
+| padding | `6px 16px 14px` | 无（靠父级） | **`6px 0 8px`**（左右已由父级提供） |
+| 溢出 | 无 | 无保护 | **`overflow-x:hidden` + `box-sizing:border-box`** |
+
+### ④ 数学核对（容器 900px）
+| 每行 | 每列宽 | 总占宽 |
+|---|---|---|
+| 3 | 294.7px | 3×294.7 + 16 = 900px ✓ |
+| 4 | 219.0px | 4×219.0 + 24 = 900px ✓ |
+| 5 | 173.6px | 5×173.6 + 32 = 900px ✓ |
+
+均精确铺满，无溢出、无粘连。
+
+### ⑤ 复盘
+`calc()` 除数是 `var()` 是 CSS 的硬限制，不是浏览器差异。
+我在 v2.2.34 设计这条公式时没意识到，导致整条规则静默失效——
+表现是「卡片粘连」而不是「报错」，所以从现象反推很难定位。
+**教训：凡 calc 里带除法的 CSS 变量方案，必须落地成具体字面量或穷举档位。**
+
+### ⑥ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.34 (2026-11-25) — 修「每行 N」列数溢出的边界问题
+
+### ① 现象
+用户选「每行 5」，实际排成 4 列，且最右侧卡片出界、底部出现横向滚动条。
+
+### ② 数学根因
+v2.2.31 的写法是**硬 N 列 + 220px 下限**：
+
+```css
+repeat(var(--dsb-cols), minmax(max(220px, calc(...)), 1fr))
+```
+
+| 每行 | 每列最小值 | N 列总需宽 | 面板可用宽 | 结果 |
+|---|---|---|---|---|
+| 5 | 220px | 5×220 + 4×10 = **1140px** | 约 900px | **溢出 240px** |
+
+`repeat(N, …)` 是**硬列数**，不会因为容器不够而减少列数；`minmax` 下限 220px
+又把每列死死撑住 → 总宽顶爆容器 → 出界 + 横向滚动。
+
+### ③ 修复：列宽改为纯百分比
+```css
+grid-template-columns: repeat(auto-fit,
+  minmax(calc((100% - (var(--dsb-cols) - 1) * 10px) / var(--dsb-cols)), 1fr)) !important;
+overflow-x: hidden;
+box-sizing: border-box;
+```
+
+核心变化：
+- **列宽 = 可用宽度 / N**（百分比，无固定 px 下限）→ N 列正好铺满
+- **`auto-fit`** 替代 `repeat(N)` → 容器不够时自动减列，不溢出
+- **`overflow-x: hidden`** 双保险
+
+### ④ 数学验证（W=900px, gap=10px）
+| 每行 | 目标列宽 | auto-fit 实排 |
+|---|---|---|
+| 3 | 293.3px | 3 列 |
+| 4 | 217.5px | 4 列 |
+| 5 | 172.0px | 5 列 |
+
+三档均精确铺满，无溢出。
+
+### ⑤ 取舍说明
+去掉了「每列最小 220px」这个保护。代价是选 5 列时单卡可能窄到 172px（文字会换行更多）。
+如果你更看重「卡片不能太窄」，那就必须接受「窄屏时少于 N 列」——
+这两个诉求互斥，不能同时成立。当前选择是**保证不溢出**。
+
+### ⑥ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.33 (2026-11-25) — 修卡片按钮被裁掉（回退 overflow:hidden）
+
+### ① 现象
+用户反馈「按钮都没了」。卡片里重连/断开/详情/导出/卸载 整行消失。
+
+### ② 根因
+v2.2.32 为解决「卡片溢出边界」，给 `.dsb-mcp-card` 加了 `overflow:hidden`。
+但卡片高度是**自适应**的（不是固定高），内容一旦超出 grid 行高，
+底部内容直接被裁掉 —— 恰好是 `.dsb-mcp-acts` 那一行按钮。
+叠加 `.dsb-mcp-acts { margin-top: auto }`，按钮会被推到裁切区之外。
+
+### ③ 修复
+- 去掉 `overflow:hidden` 与 `height:100%`（卡片高度自适应，不裁剪）
+- 保留宽度约束：`box-sizing:border-box` + `min-width:0`
+- `.dsb-mcp-acts` 去掉 `margin-top:auto`（不需要推到底部）
+- 补 `.dsb-mcp-summary` / `.dsb-mcp-calls` 的 `overflow-wrap:anywhere; min-width:0`
+  （长中文说明不撑宽卡片）
+
+**思路调整**：卡片边界由 **grid 的 `minmax(220px, …)` 下限**保证，
+而不是靠 `overflow:hidden` 兜底。后者会牺牲内容可见性。
+
+### ④ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.32 (2026-11-25) — 修卡片溢出边界 / 补回滑块位移 / 按钮不再误灰
+
+### ① 卡片内容溢出边界
+用户反馈「卡分裂都出去边界了」。
+对比技能卡片 `.dsb-card` 后发现关键缺失：
+
+| 属性 | 技能卡片 | MCP 卡片（修前） |
+|---|---|---|
+| `box-sizing` | `border-box` | **无**（content-box → padding 撑出容器） |
+| `height` | `100%` | **无** |
+| `min-width` | — | **无**（长内容不收缩） |
+| `overflow` | — | **无** |
+
+修复：`.dsb-mcp-card` 补 `height:100%; box-sizing:border-box; min-width:0; overflow:hidden`。
+同时 `.dsb-mcp-acts` 由 `justify-content:space-between` 改为 `flex-start` + `min-width:0`，
+避免按钮被挤到卡片外。
+
+### ② 注入滑块仍然不动
+**根因**：v2.2.31 替换 CSS 块时，把 v2.2.30 加的滑动规则**整块替换掉了**。
+grep 确认 `.dsb-mcp-valve-btn.on .dsb-sw-track/.dsb-sw-thumb` 两条都不存在。
+
+修复（补回，且这次写在独立位置，不会再被块替换误伤）：
+```css
+#dsh-skill-browser-panel .dsb-mcp-valve-btn.on .dsb-sw-track { background:#2ecc71 }
+#dsh-skill-browser-panel .dsb-mcp-valve-btn.on .dsb-sw-thumb { left:18px }
+```
+
+### ③ 断开后「重连」变灰不可点
+重连按钮的 `disabled` 绑定的是 `s.disabled`（配置里的停用状态）。
+断开的语义是「只关连接、不改配置」，但按钮仍被该条件拖灰，导致断开后无从恢复。
+
+修复：**重连与断开按钮都不再绑定 `disabled`**（卡片视图 + 树状视图同步），
+只保留 `title` 说明。二者都是「恢复/断开连接」动作，任何时候都应可点。
+
+### ④ 复盘（连续两轮同类失误）
+v2.2.31 的 CSS 块整块替换（用 splice 覆盖一段）把相邻的滑动规则一起删掉了。
+**教训：整块替换 CSS 后必须 grep 回验「上一轮新增的每条规则是否还在」**，
+而不是只验证新写入的内容。本次已把新规则放在独立语句位置，降低再被误伤的概率。
+
+### ⑤ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.30 (2026-11-25) — 修复注入滑块「点了不动」
+
+### ① 根因（两个叠加）
+**原因一：滑块位移规则挂错了父类**
+原有滑动效果由这两条驱动：
+
+```css
+#dsh-skill-browser-panel .dsb-switch.dsb-sw-on .dsb-sw-track { background:#27ae60 }
+#dsh-skill-browser-panel .dsb-switch.dsb-sw-on .dsb-sw-thumb { left:18px }
+```
+
+它们只认 `.dsb-switch` 父类。v2.2.29 把阀门从 `<label class="dsb-switch dsb-mcp-valve">`
+改成 `<button class="dsb-mcp-valve-btn">` 后，**不再匹配这两条选择器**，
+所以点击后虽然加了 `.on` 类，轨道不变色、滑块也不位移 —— 视觉上「没动」。
+
+**原因二：没有点击瞬间的即时反馈**
+原来只依赖 `paintMcp()` 重绘（16ms 节流）加一次网络往返，
+在宿主热重载慢时会有一段「点了没反应」的空窗。
+
+### ② 修复
+**补滑块规则**（不依赖 `.dsb-switch` 父类）：
+```css
+#dsh-skill-browser-panel .dsb-mcp-valve-btn.on .dsb-sw-track { background:rgba(91,108,255,.85) }
+#dsh-skill-browser-panel .dsb-mcp-valve-btn.on .dsb-sw-thumb { left:18px }
+```
+
+**加点击即时 DOM 反馈**（不等重绘、不等网络）：
+```js
+if (_next) sSess.classList.add("on"); else sSess.classList.remove("on");
+sSess.setAttribute("data-sess-on", _next ? "1" : "0");
+var _lbl = sSess.querySelector(".dsb-sw-label");
+if (_lbl) _lbl.textContent = _next ? "注入" : "不注入";
+```
+随后 `toggleSessionMcp()` 的乐观更新 + 300/800ms 两次拉取会把真实状态校准回来（失败则回滚）。
+
+### ③ 清理
+删除替换过程中产生的一处重复 `if (sSess) {}` 分支（会重复触发 toggle）。
+
+### ④ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.29 (2026-11-25) — 注入滑块可点 + 新增「断开连接」
+
+### ① 注入滑块点击无效的修复
+原阀门用的是 `<label>`，内无 `<input>`：
+- `change` 事件永远不触发（`handleMcpChange` 只认 `[data-mcp-toggle]`）
+- `<label>` 在某些情况下会把 click 转发多次，导致状态闪回
+
+**改法**：
+- 元素 `<label class="dsb-switch dsb-mcp-valve">` → `<button type="button" class="dsb-mcp-valve-btn">`
+- 走 `handleMcpClick` 的 `[data-sess-mcp]` 分支（已在 v2.2.18 提到最前）
+- 新增 `.dsb-mcp-valve-btn` 样式（复用原开关视觉，5 条规则）
+
+**参考技能滑块的状态收敛做法**（用户点名要求）：
+切换成功后不只用一次 `loadSessionMcp()`，而是补两次延迟拉取：
+
+```js
+loadSessionMcp();
+setTimeout(function () { loadSessionMcp(); }, 300);
+setTimeout(function () { loadSessionMcp(); }, 800);
+```
+
+原因：宿主写配置 → DSH 补丁层热重载 → 运行时状态变化有延迟，
+单次拉取会读到旧值把滑块弹回。失败时也补拉一次校准。
+
+### ② 新增「断开」按钮（每个 MCP 卡片）
+用户要求：每个 MCP 加一个断开连接按钮。
+
+**与「停用」的语义区分**：
+
+| 操作 | 行为 | 配置 |
+|---|---|---|
+| **停用**（原开关，已上移为总开关） | 写 `disabled: true`，DSH 重载后不再加载 | 改 |
+| **断开**（新增） | 只关当前连接（子进程退出） | **不改**，下次启动仍会连上 |
+
+- 宿主端：`disconnectMcp(ctx, id)` —— 对该 loader entry 的 `fiber` 调 `dispose()`；
+  无 `dispose` 时回退到 `update()` 重建（旧连接先关）
+- 路由：`POST /dsh-skill-browser/mcp/disconnect` body `{ id }`
+- 客户端：`doMcpDisconnect(id)` —— toast 提示 + 600ms/1600ms 两次延迟拉状态
+- 按钮位置：「重连」之后，文案「断开」，`title` 说明不改配置
+
+### ③ 核验
+- `lib/client.js` / `lib/index.js` / `lib/mcp.js` 语法破坏检查：全部 exitCode=0
+- 阀门链路：`data-sess-mcp` → `handleMcpClick`（L2534）→ `toggleSessionMcp` → `POST /session-mcp/toggle`
+- 断开链路：`data-mcp-disconnect`（L2053）→ `handleMcpClick`（L2608）→ `doMcpDisconnect`（L2768）→ `POST /mcp/disconnect`
+
+### ④ 生效方式
+宿主端（新路由 + 新导出）与客户端均有改动：**彻底退出 DSH 客户端再启动**。
+
+## 2.2.28 (2026-11-25) — 修复卡片互相嵌套（真正的单列根因）
+
+### ① 关键线索（用户截图）
+卡片是**嵌套**的：ansys-cfx-mcp 出现在 ansys-agent-bridge 卡片内部，
+ansys-fluent 又嵌在 cfx 里面 —— 这不是宽度问题，是 **HTML 标签未闭合**。
+
+### ② 根因
+2.2.24 清理「重复阀门块」时，把 `mcpCardHtml()` **卡片自身的 `</div>` 一并误删**
+（函数内 div 9 开 8 闭，差 1）。浏览器按 HTML 解析规则，
+下一张卡片整体嵌进上一张未闭合的 `.dsb-mcp-card` 内，
+10 张卡片层层嵌套 → 外层 grid 的每个嵌套层级都变成一个新列位 → 视觉上只剩 1 条。
+
+### ③ 修复
+`mcpCardHtml()` 结尾补回卡片自身闭合：
+
+```js
+if (M.detailId === s.id) h += mcpDetailHtml(s, st);
+h += "</div>";   // acts 行闭合（原有）
+h += "</div>";   // 卡片自身闭合（本轮补回）
+return h;
+```
+
+### ④ 验证
+- `mcpCardHtml`：div 9 开 / 9 闭 → ✅ 配平
+- `mcpTreeHtml`：div 17 开 / 17 闭 → ✅ 配平
+- `node --check` 三文件全部 exitCode=0
+
+### ⑤ 反思（方法论级教训）
+本轮反复修宽度（width:100%、minmax 下限、flex-grow）全都无效，
+因为**真正的问题在 DOM 结构层**：标签不闭合时，任何 CSS 都救不了。
+正确顺序应是：**先验 DOM 配平，再查 CSS**。若一开始做 div 开闭统计，
+一眼就能看到差 1，不会耗掉四轮。
+
+### ⑥ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.27 (2026-11-25) — 修复 MCP 卡片塌缩为单列（宽度链断裂）
+
+### ① 现象
+MCP 卡片列表塌缩成左侧一条窄带，右侧大片空白；技能列表（技能浏览 Tab）正常。
+与 GitHub 远程 `77ed813`(2.2.14) 对比后确认：**原版无此问题，塌缩是本轮改动引入的**。
+
+### ② 根因（宽度约束链断裂）
+原版 `.dsb-mcp` 与 `.dsb-mcp-grid` 都**不写 width**，依赖父级纵向 flex 的
+`align-items: stretch` 继承满宽。这个隐式传递在以下三点被打破：
+
+| 位置 | 问题 |
+|---|---|
+| `.dsb-sess-bar-hint` | 写了 `flex: 1 1 auto`。父容器宽度未定时，flex-grow 反向把父级压成**内容宽度** |
+| `.dsb-sess-bar` | 纵向 flex 子项但无 `width:100%`，其宽度由内部 flex-grow 反推 |
+| `.dsb-mcp` / `.dsb-mcp-grid` / `.dsb-mcp-tree` | 同样依赖隐式 stretch，缺乏显式兜底 |
+
+一旦容器宽度被压到 < 300px，`repeat(auto-fill, minmax(300px,1fr))` 只能排 1 列 → 卡片成窄条。
+
+### ③ 修复（显式声明宽度，断开对内容的依赖）
+```css
+.dsb-mcp       { width: 100%; }
+.dsb-mcp-grid  { width: 100%; }
+.dsb-mcp-tree  { width: 100%; }
+.dsb-sess-bar  { width: 100%; box-sizing: border-box; }
+.dsb-sess-bar-hint { margin-left: auto; }   /* 去掉 flex:1 1 auto */
+```
+`margin-left: auto` 替代 `flex-grow` 做右推：不参与宽度分配，不会反向撑宽父级。
+
+### ④ 排查确认
+全plugin范围搜索 `flex: 1 1 auto`，仅剩 `.dsb-gsp` / `.dsb-grsp`（技能视图内，
+不在 MCP 视图链路上），无同类风险。
+
+### ⑤ 与原版的差异说明
+本轮所有改动已通过 `git diff` 存为本地补丁 `skill-browser-local-changes.patch`（70 KB，留在开发机，不随包发布），可随时回退或逐段审查。
+
+### ⑥ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.25 (2026-11-25) — 修复卡片被压成 40px 一条的布局 bug
+
+### ① 现象
+用户截图：MCP 卡片列表塌缩成左侧约 40px 宽的一条，卡片内文字竖排成一字一行，
+右侧大片空白。页面本身没有报错，只是布局崩了。
+
+### ② 根因
+`paintMcpNow()` 里给网格写的是：
+
+```js
+grid-template-columns: repeat(M.cols, minmax(0, 1fr))
+```
+
+`minmax(0, 1fr)` 的**下限是 0**，没有任何最小宽度保护。
+当父容器可用宽度不足（面板宽度计算 / 侧边栏占位 / 窗口变窄 任一情况），
+4 列就被平均压到每列几十像素，卡片内容随之竖排塌缩。
+
+### ③ 修复
+改为按可用宽度自适应列数，并给每列一个真实下限：
+
+```js
+grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
+```
+
+- 容器够宽：按 220px 起排，装得下就多列（等价于原来「每行 N」的意图）
+- 容器变窄：**自动减少列数**，而不是压缩列宽
+- 卡片最小宽度 220px，永远不会被压成一条
+
+原有的「每行 3/4/5」按钮仍保留（写入 `--dsb-want-cols` 供后续按需使用），
+但不再作为硬性列数——避免再次出现「硬撑 N 列导致塌缩」。
+
+### ④ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.24 (2026-11-25) — 三层语义收敛：总开关（加载） × 卡片阀门（注入） × 卡片亮灯
+
+### ① 设计（用户 2026-11-25 明确）
+把两个维度彻底分开，避免混在一起：
+
+| 控件 | 语义 | 位置 |
+|---|---|---|
+| **总开关** | 全部 MCP 是否**加载进 DSH**（进程层，写 `disabled`） | 顶部按钮「⏻ 总开关关闭 / ⚡ 总开关开启」 |
+| **卡片阀门** | **本对话**是否允许注入该 MCP（`restrict` 遮 loader） | 每张卡片底部动作区第一个控件 |
+| **卡片亮灯** | 每个对话亮灯不同，一眼看出本对话能用哪些 | 卡片整体 `.dsb-card-inj` |
+
+### ② 具体改动
+- **原卡片内「加载开关」→ 改为「注入阀门」**
+  - 文案由 `开/关` 改为 `注入/不注入`
+  - 数据属性 `data-mcp-switch` → `data-sess-mcp`（走 `/session-mcp/toggle`）
+  - 卡片视图（L2044）与树状视图（L2199）同步改
+- **顶部批量按钮语义澄清**
+  - `⏻ 全部关闭` → `⏻ 总开关关闭`，title 说明「不加载进 DSH，进程停止；不影响各对话的注入阀门设置」
+  - `⚡ 全部开启` → `⚡ 总开关开启`，title 说明「加载进 DSH；是否注入各对话仍由卡片内的阀门决定」
+- **卡片亮灯**
+  ```
+  .dsb-mcp-card.dsb-card-inj{border-color:rgba(91,108,255,.55);background:rgba(91,108,255,.08);box-shadow:0 0 0 1px rgba(91,108,255,.22)}
+  .dsb-mcp-card.dsb-card-inj .dsb-mcp-name{color:#c3cbff}
+  ```
+- **移除上方独立控制区**
+  10 个胶囊的开关矩阵整体删除，只留一行会话标识：
+  `本对话 …481ae904 · 已注入 3 / 10 个 MCP · 在卡片底部点「本对话可注入」切换`
+- **原 `data-mcp-switch` 处理分支保留**（加注释说明当前无元素命中），便于未来恢复卡片内加载开关。
+
+### ③ 机制不变
+`agent.ctx.tools.restrict({ deny: ['mcp__<server>__load_tools'] })`
+→ `catalog(scope)` 返回空串 → 该 MCP 目录从该对话消失；进程不杀、其他对话不受影响。
+
+### ④ 生效方式
+宿主端（agent/created 监听 + 路由）与客户端（UI）均有改动：**彻底退出 DSH 客户端再启动**。
+
+## 2.2.22 (2026-11-25) — 卡片隐藏启动命令 + 说明换为人话
+
+### ① 隐藏启动命令路径
+用户原话：「卡片中显示他们的文件路径好像没必要显示啊我也不看」。
+卡片里那行 `C:\...\mcp-launch.exe 15 D:\Program ...` 属于实现细节，
+对「要不要用这个 MCP」的决策零帮助，反而占据卡片首屏最显眼的位置。
+改法：`.dsb-mcp-target` 仅在**该卡片「详情」展开时**渲染（`M.detailId === s.id`），
+默认不显示，需要排错时点「详情」即可看到完整命令。
+
+### ② 说明文字换为人话
+卡片原先把 `s.summary`（作者用工具名关键词猜的「1 个工具，主要提供查询 / 写入/配置能力」）
+直接显示，信息量很低。改为 `s.purpose || s.summary`，
+即 2.2.17 引入的 `MCP_PURPOSE` 手写说明（如「控制 Fluent：启动会话、跑 journal…」），
+两处渲染（卡片视图 + 树状视图）同步生效。
+
+### ③ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.21 (2026-11-25) — 当前对话区压缩高度（修复「下方卡片看不见」）
+
+### ① 问题
+用户反馈：「太拥挤了，下面的卡片看不到」。
+实测原因：`.dsb-mcp` 是纵向 flex 容器，`.dsb-mcp-grid`（卡片区）靠 `flex:1` 取剩余空间；
+而新加的 `.dsb-sess` 没有高度约束，按内容撑开约 **456px**
+（10 项两列 5 行 × 72px + 间距 + 头部），把卡片区压到不足 170px。
+
+### ② 改法
+- **单行卡片**：去掉第二行说明，改挂 `title` 属性（hover 可见），
+  每项高度从约 72px 降到约 28px。
+- **多列紧凑网格**：`minmax(320px,1fr)` → `minmax(190px,1fr)`，
+  宽屏 5 列、网格 2 行。
+- **高度封顶**：`.dsb-sess` 加 `max-height: 38%` + `flex: 0 0 auto`，
+  `.dsb-sess-list` 加 `overflow-y: auto` + `min-height: 0`，
+  超出时自身滚动，不再挤压卡片区。
+- **间距收窄**：卡片 padding 10→6、网格 gap 8→6、外层 padding 12→10。
+
+### ③ 效果
+控制区高度 456px → 约 116px（封顶 38%），卡片区从不足 170px 回到 340px 以上。
+
+### ④ 尺寸仍并入既有档位
+圆角 11/8/6/4/999；字号 11/10.5/10；间距 10/8/6。
+
+### ⑤ 生效方式
+仅客户端：`Ctrl+Shift+R`。
+
+## 2.2.20 (2026-11-25) — 当前对话区改为卡片式（对齐下方清单的视觉语言）
+
+### ① 问题
+用户原话：「下面的清单卡片看起来很利索，有什么一目了然的方式吗」。
+上一版把 10 个 MCP 塞在同一个大框里，行与行只有空白间隔，缺少「块」的边界；
+说明文字与名字同排，扫视时互相打架。
+
+### ② 改法：每项做成独立小卡片（同 `dsb-mcp-card` 的视觉语言）
+- `.dsb-sess-item`：`flex-direction: column`、`gap: 6px`、`padding: 10px 12px`、
+  圆角 8、独立底色 `rgba(128,138,160,.06)` + 边框，hover/开启各有形态。
+- **第一行两端对齐**：`名字`（`flex: 1 1 auto` + 省略号）+ `状态徽标`（`flex: 0 0 auto`）。
+  名字左起、状态右止，扫视时视线落点固定。
+- **第二行独占**：说明文字（`font-size: 10.5`、灰色），不与名字抢权重。
+- 网格 `repeat(auto-fill, minmax(320px, 1fr))`：宽屏多列、窄屏单列。
+
+### ③ 尺寸全部并入既有档位
+圆角 11（外层）/8（卡片）/6（ID 徽标）/4（状态徽标）/999（圆点）；
+字号 11（名字/头部）/10.5（说明/提示）/10（状态/ID）；
+间距 12（padding）/8（网格与行距）/6（卡片内）。
+
+### ④ 生效方式
+仅客户端：`Ctrl+Shift+R` 硬刷新。
+
+## 2.2.19 (2026-11-25) — 当前对话控制区视觉重做
+
+### ① 修复点击无效（2.2.18 遗留的逻辑嵌套 bug）
+`handleMcpClick` 原本先取 `[data-mcp-act]` 再在 `if (b)` 内取 `[data-sess-mcp]`；
+而胶囊只带 `data-sess-mcp`，导致 `b === null` 整块跳过，表现为「点了没反应」。
+已把胶囊判断提到最前，不再依赖 `b` 存在。
+
+### ② 视觉重做（依据 dsh-plugin-ui-design 方法论）
+- **圆角并入既有档位**：控制区 11（同 MCP 卡片）、胶囊 8、ID 徽标 6、加载数 4、圆点 999。
+  原用 9 / 7 两个孤立值（该插件此前仅各出现 3~4 次，不成档）。
+- **间距走偶数节奏**：控制区 padding 12、行间距 8、胶囊内 gap 6、头部 gap 8。
+  原用 7 / 9 两个不在 1/2/4 节奏上的值。
+- **两列自适应网格**：控制区从单列 10 行改为 `repeat(auto-fill, minmax(340px, 1fr))`，
+  宽屏两列、窄屏一列，垂直占用减半（对应铁律「能一屏展示就不滚动」）。
+- **说明文字右对齐**：胶囊 `flex: 0 0 auto` 固定，说明 `min-width: 0` + `overflow-wrap: anywhere`，
+  长中文说明换行不撑破容器，行首对齐整齐。
+- **层级弱化**：控制区背景改为 `--chipBg`（与卡片同级的最弱底色），
+  边框透明度从 .28 降到 .22，让「控制区」与「详情卡片」区分层次。
+
+### ③ 未改动
+- 功能逻辑、宿主端路由、on-demand 机制、默认全关策略均不变。
+
+### ④ 生效方式
+仅客户端（lib/client.js）：`Ctrl+Shift+R` 硬刷新即可。
+
+## 2.2.17 (2026-11-25) — 面板语义收敛：MCP 级开关 + 人话说明
+
+### ① 决策依据（用户明确）
+- 一个 MCP 内含数十个工具（workbench 50+、spaceclaim 29、playwright 25…），
+  用户不可能逐个判断「我需要哪个工具」；用户只知道「我要用 Fluent / 浏览器」。
+- 因此开关粒度定在 **MCP**，不做工具级勾选。
+- on-demand 的目录开销（约 200 行 × 160 字符 ≈ 3.3 万字符）用户已明确「可以接受」，
+  远小于 eager 的全量 schema（≈16.6 万字符）。故**继续使用 on-demand**。
+
+### ② 面板改动
+- 每个 MCP 独占一行：`● <名字> 开/关` + 一句人话功能说明。
+  说明来自新增的 `MCP_PURPOSE`（10 个 MCP 手写），未列出的回退到关键词猜测。
+- 去掉上一版的「注入 N / 仅目录」三态显示（用户反馈会造成「要我选工具」的误解），
+  恢复单纯的 开 / 关 两态。
+- 说明文案：「开启=本对话可用该 MCP 的全部工具 / 点一下只影响本对话」。
+
+### ③ 新对话默认全关
+- `agent/created` 时对未显式开启的 MCP 逐个施加 `restrict({deny:[loader]})`。
+- MCP 服务启动有 15s 延迟，故采用重试：1.5s 一次、最多 12 次（约 18s），
+  直到 `listLoaderTools()` 能列出 loader 为止。
+- 用户开启的 MCP 记入 `_sessionAllowed`，后续重试不会误遮。
+
+### ④ 移除
+- 删除 `loadMcpTools()` 与相关探测：内核的 `offered` 为私有字段，
+  `catalog()` 文本不对插件暴露，`load([])` 报错不含名单，
+  因此**无法从外部枚举未加载的工具名**，该能力不可实现，留作死代码无益。
+
+### ⑤ 保留的能力（上一版已有）
+- 按对话逐项开关（`restrict` 遮 loader → catalog 空串 → 目录消失）
+- 切换对话自动刷新（`sessions.list.subscribe`，仅在 MCP Tab 可见时）
+- 面板关闭时卸掉监听
+
+### ⑥ 生效方式
+宿主端（agent/created 监听 + inject）与客户端（UI）均有改动：
+**彻底退出 DSH 客户端再启动**。
+
+## 2.2.16 (2026-11-24) — 按对话（per-session）逐项开关 MCP
+
+### ① 需求
+MCP 工具目录会注入每个对话的系统提示。用户需要在面板里**按对话**决定哪些 MCP 可见，
+并看到该对话的开启状态；默认尽量少占上下文。
+
+### ② 机制（官方端内置 dsh-mcp-client 0.2.3-alpha.2 实测源码，非推测）
+
+    1) catalog(scope) 决定某 MCP 是否对某对话可见：
+         if (offered.size === 0 || ctx.tools.get(this.name, scope) !== this.tool) return "";
+       this.name = `mcp__<serverName>__load_tools`（该 MCP 的 loader 工具）
+
+    2) loader 由 publish() 注册在【全局层】：
+         publish(tools) { const unregister = this.ctx.tools.register(this.tool); ... }
+
+    3) 因此对某个 agent 施加：
+         agent.ctx.tools.restrict({ deny: ['mcp__<serverName>__load_tools'] })
+       → 该对话看不到 loader → catalog 返回空串 → 该 MCP 目录从该系统提示消失。
+
+  MCP 服务进程**不杀**、其他对话**不受影响**、切换**可逆**（restrict 返回 disposer）。
+
+### ③ 宿主端新增
+- `GET  /dsh-skill-browser/session-mcp?sessionId=xxx`
+    返回该对话每个 MCP 的 `{id, serverName, enabled, loadedTools, live}`
+- `POST /dsh-skill-browser/session-mcp/toggle`  body `{sessionId, serverId, enabled}`
+- `GET  /dsh-skill-browser/session-mcp/servers`  本机全部 MCP 的 loader 工具名（排错用）
+- 新增 `agent/disposed` 监听：会话销毁时释放其 restrict，避免泄漏。
+- `inject` 补 `agents`（按 sessionId 取 live agent）。
+
+### ④ 客户端新增
+- MCP Tab 顶部新增「当前对话」区块：每个 MCP 一个胶囊按钮
+    `● <serverName> 开/关  [已加载 N]`，点亮=该 MCP 对本对话可见。
+- 当前对话 id 取法与主程序一致：`sessions.list.getSnapshot()` 里
+  `retainedBy.mainView > 0` 的那一行（不取 URL、不取标题，避免 fork 同名误判）。
+- 点击即时切换：乐观更新 → POST → 失败回滚并 toast。
+- 非活跃对话给出「非活跃（需在该对话内操作）」提示。
+
+### ⑤ 已知限制（内核明示，非本插件可绕过）
+文档原文：「On-demand loading is outside tool restrictions」——**已加载的具体工具**
+位于 agent 自己的 scope，`restrict` 无法过滤。因此「关闭」的准确语义是
+「目录消失、模型不再得知该 MCP」；此前已加载的工具保留至该对话结束。
+
+### ⑥ 生效方式
+宿主端（lib/index.js 新路由 + inject 变更）与客户端（lib/client.js UI）均有改动：
+**彻底退出 DSH 客户端再启动**；`Ctrl+Shift+R` 只能刷新客户端半边。
+
+## 2.2.15 (2026-11-24) — MCP 批量启停：一键全关 / 全开 / 只留可用的
+
+### ① 需求来源
+MCP 工具定义会注入**每个对话**的上下文（注册在 `ctx.tools` 全局层，`scopeOf(ctx) ?? ctx.root`），
+条目越多、工具越多，上下文占用越大。原先只能逐个点开关，10 个 MCP 要手点 10 次，且
+「全部关闭」这种高频操作没有入口。
+
+### ② 新增按钮（MCP Tab 工具栏右侧，分隔线之后）
+- **⏻ 全部关闭 (N)** —— 一键停用全部 MCP，释放上下文。`N` = 当前启用中的数量，无启用项时按钮置灰。
+- **⚡ 全部开启 (N)** —— 一键启用全部 MCP。`N` = 当前停用中的数量，无停用项时置灰。
+- **◎ 只留可用的** —— 局部开启：只保留 `phase === "active"` 或 `toolCount > 0` 的条目，
+  其余全部停用。用于「服务端路径已失效、连不上的那批」一次性清掉，避免反复重连刷日志。
+
+### ③ 后端新路由
+- `POST /mcp/enable-batch` / `POST /mcp/disable-batch`
+  - body `{ all: true }` → 对全部 MCP 生效
+  - body `{ ids: [...] }` → 只对列出的 id 生效（局部）
+  - 响应 `{ ok, enable, total, okCount, failCount, results:[{id, ok, error}] }`
+  - 全部成功 → 200；部分失败 → 207；整体异常 → 500
+  - 实现：循环调用既有 `setMcpEnabled(ctx, id, want)`，不新增写入逻辑，风险与单点开关一致。
+
+### ④ 客户端行为
+- 变更前先过滤出**真正需要变更**的条目，已处于目标状态的跳过（避免无意义写文件 + 热重载）。
+- 全部成功：toast「全部关闭成功（N 项）。若未生效请彻底重启 DSH。」
+- 部分失败：toast 列出前 3 个失败项及原因（如「无法定位该 MCP 所在的 patch 文件」）。
+- 完成后自动 `loadMcp(true)` 拉取最新运行时状态。
+
+### ⑤ 生效方式
+- 宿主改动（`lib/index.js` 新路由）+ 客户端改动（`lib/client.js` 按钮与逻辑）：
+  **彻底退出 DSH 客户端再启动**（宿主无热重载；`Ctrl+Shift+R` 只刷新客户端，新路由不生效）。
+
+### ⑥ 与「按对话开关」的关系
+本版是**全局**批量开关，不区分会话。按对话隔离在机制上可行（`dsh-scope` 的
+`createScope(ctx, agent)` + `scopeTarget(agent, agent)`，工具注册到 `agent.ctx` 即只对该对话可见），
+但每个对话独立挂 MCP 意味着每个对话都要起一套服务端进程（本机 10 个 MCP，单个 ANSYS
+服务端启动 15s 延迟 + 数秒握手），成本过高。更现实的路线是「服务端进程共享 + 工具清单按
+对话过滤」，需要改 `mcp-client` 注册逻辑，未在本版实现。
+
 
 ## 2.2.14 (2026-11-18) — 治「重载后分组要缓冲一会」+「AI 分组 90s 还在转圈」
 
@@ -7,694 +1086,3 @@
 - 用户实测：重载后技能卡秒显，但「分组」行要缓冲一会儿才显示整行（卡顿修复前的版本没有这个割裂感）。
 - **根因**：2.2.10 的首帧缓存只缓存技能列表（`dsh-sb-skills-cache`），分组数据没缓存；且 `loadGroups` 挂在 `/skills` 成功之后、自身无重试 → 分组行要等「宿主就绪 + /skills 回包 + /groups 回包」第二次 paint 才出现。
 - **改法**：
-  - 新增 `dsh-sb-groups-cache`（groups + assign），首帧与技能缓存一起读出并先画分组行；宿主真数据回来后覆盖并落缓存。
-  - `loadGroups` 改为与 `/skills` 并行发起，加 3 次退避重试（300/600ms）+ 防重复并发，失败不再让分组行空白。
-- 生效方式：`Ctrl+Shift+R`（纯客户端改动）。
-
-### ② AI 分组超时与重试加固：不再无限转圈
-- 日志实证（`desktop-next-2026-11-18.0.jsonl`）：15:27:54 四批并行各因 magpie 不支持 reasoningEffort 多跑一轮重试；15:30:24 并行批 150s 超时 abort；15:35:24 回退串行又 150s 超时 —— 全程约 300s，用户看到 90s 仍在转圈。
-- **改法**（遵循用户拍板「跟随会话模型，只做超时与重试加固」）：
-  - 单次超时 150000ms → 60000ms（askModel 兜底 120000 → 60000）。
-  - 删掉串行回退里 abort/timeout 后再「盲试一次全量」的分支（这是 300s 的第二轮）。
-  - 客户端加 95s 硬超时兜底收尾 + aborted/timeout 的明确中文提示，按钮不再无限转圈。
-  - 进度条「预计约 Ns」从 40s 调到 50s（贴合 60s 单次超时，减少「已超时还在显示预计 40s」的错位感）。
-  - 「快速上手」从 Tab 栏改为**右侧按钮排第一个 ? 图标**（title「快速上手·点击展开/收起」）：点开显示、再点原路收回来源视图；⑤ 文案的「预计约 40s」同步为 50s，并补「网关卡住约 60s 中止并提示」一句。
-- 生效方式：**彻底退出 DSH 客户端再启动**（宿主端 groups.js / index.js 改动）；client.js 部分 `Ctrl+Shift+R`。
-
-### ③ 顶栏 UI 比例重调（按用户三张截图反馈）
-- **帮助按钮并入右侧工具排**：原在 Tab 栏末位的 `?` 移到右上角按钮排第一个（皮肤键前），与其余工具键同一紧凑排；点击弹出快速上手、再点收回，选中时高亮。
-- **两排比例对调**：Tab 栏放大（`padding 4px 12px→5px 14px`、`font-size 12→13`、间距 4→5），右侧工具键缩小（`padding 5px 10px→4px 8px`、`font-size 16→13`、`min 30×26→26×24`、gap 6→4，SVG 改 `1.08em` 派生不写死）——解决「Tab 太小、右侧按钮太大」。
-- **选中背景全皮肤匹配**：`.dsb-tab-on` 从写死蓝渐变+白内阴影改为皮肤自适应令牌 `var(--dsb-onbrand-bg1/bg2)` + `var(--dsb-onbrand)`，与皮肤层 :5599 同款；浅色/深色/8 个中间调皮肤下选中态文字与背景对比度均达标，不再出现白描边与皮肤脱节。加粗保留为第二识别通道。
-- **选中态蒙皮增强**：选中 Tab 在渐变底之外加 1px 皮肤色描边环 + 同色系柔和外发光（`box-shadow`，令牌 `--dsb-onbrand`/`--dsb-onbrand-bg1` 派生），浅/深/中间调皮肤都自动适配、明显可辨；含不支持 `color-mix` 时的纯描边兜底。
-- **round3 精调**（按用户后续两张截图）：
-  - 右侧工具键外框再收紧贴图标：`padding 4×8→3×6`、`min 26×24→20×20`、圆角 `8→7`、gap `4→3`。
-  - 四个 Tab 背景等宽：固定 `width:76px` + `box-sizing:border-box` + `justify-content:center`，中文四字/英文三字母背景同宽。
-  - Tab 栏靠中间：`.dsb-tabs` 改 `margin:0 auto`，在 flex head 中真正居中（不再贴左）。
-  - `MCP` 选中态再粗一档：`#dsb-tab-mcp.dsb-tab-on{font-weight:700}`（700 比通用选中 600 略粗，视觉接近现在效果），未选中时不加粗、与其它 Tab 一致。
-- 生效方式：`Ctrl+Shift+R`（纯客户端 CSS/DOM 改动）。
-
-### 顺带
-- `lib/index.js` 的 `VERSION` 变量从历史遗留 2.2.12 对齐到 2.2.14（与 package.json 一致）。
-- 发布前功能一致性审计对齐文档口径：快速上手从 Tab 改为右上角 ? 帮助入口后，实际为四个 Tab；同步修正 `README.md` / `README-zh.md` / `package.json` description / `locale/zh.json` / `locale/en.json` 共 5 个文件的「五个 Tab / five tabs / 五个页面」表述，避免文档与代码不符。
-
-## 2.2.13 (2026-11-16)
-
-### 图标配色：写死品牌色，深色主题下不再看不清
-
-- 根因：原 `icon.svg` 用 `stroke="currentColor"`，而 DSH 以 `<img>` / CSS `background-image`（data-URI）方式渲染插件图标，SVG 作为独立文档时 `currentColor` 取初始值黑色 —— 深色主题深底上几乎不可见。
-- 改法：`currentColor` → 写死品牌色 `#22A06B`；几何、`viewBox`、线宽一律不变；浅色（#F2F3F5）与深色（#212227）两种底色实测均清晰。
-## 2.2.12 (2026-11-15) — 市场配色接皮肤语义变量：分类 chip 在浅色皮肤下不再「看不清」
-
-- 用户实测：「把 MCP 市场的字体与技能列表页一致，主要是分类，如当前分类下，字看不清」。
-- **根因**（不是字号问题，是配色来源不同）：技能页分类 `.dsb-chip` 与市场分类 `.dsb-home-cat` 的**字号/内边距/圆角完全一致**（11px / 2px 9px / 999px），但——
-  - 技能页的分类 chip 在皮肤覆盖层 `skinCss()` 里被 `var(--chipBg)` / `var(--pbd)` / `var(--ptx)` 接管，选中态用 `var(--dsb-onbrand-bg1/2)` 品牌渐变 + `var(--dsb-onbrand)` 前景色；
-  - 市场分类 chip 自 v2.0.6 起是**硬编码深色系**（`#cdd3e3` 文字、`rgba(255,255,255,.1)` 边框、`.on` 固定蓝渐变压 `#fff`），而且**从来没有进过皮肤覆盖层**。于是换成浅色皮肤后：未选中 = 白底浅灰字，选中 = 浅蓝渐变上压白字，全糊在一起。
-- **改法**：市场分类 chip 改为与技能页 chip 完全同源的变量（`--chipBg` / `--pbd` / `--ptx` / `--dsb-hover` / `--dsb-onbrand-bg1` / `--dsb-onbrand-bg2` / `--dsb-onbrand`），并在 `skinCss()` 覆盖层里补齐 `!important` 段，保证 130 款皮肤各自的深浅判定都生效（浅色皮肤 `--dsb-onbrand` 自动落成深字）。
-- **顺手统一**：市场侧其余硬编码元素一并接变量——版本号/标签/统计/列选择器/空态 → `--dsb-dim`，免费/需Key/远程标签 → `--dsb-ok`/`--dsb-warn`/`--dsb-fail`，工具栏按钮与选中态 → `--chipBg`/`--pbd`/`--ptx`/onbrand 渐变，过期提示 → `--dsb-warn`，分隔线 → `--dsb-line`。
-- **修掉一个旧 bug**：市场搜索框 `color` 引用 `var(--dsb-text)`，这个变量全库从未定义过（一直吃硬编码兜底），改为与技能页一致的 `var(--ptx)`。
-- 卡片上的「分类 · 子类」文字 `.dsb-card-tag` 技能卡与市场卡本就用同一个类、同一层覆盖，本来就一致，未动。
-- 生效方式：`Ctrl+Shift+R`（纯客户端改动，无需重启 DSH）。
-
-## 2.2.11 (2026-11-14) — 治「市场调用的非常慢」：过期目录秒回 + 后台刷新 + 启动预热
-
-- 用户实测：「市场调用的非常慢」——打开市场 Tab 要干等半天。
-- **根因**（三层叠加）：
-  1. 市场目录后端来自 MCP 官方 Registry，按 cursor **串行翻页**，`MAX_PAGES = 30` / `PAGE_LIMIT = 100`（Registry 单页上限就是 100，实测 `limit=200` 直接 422，无法靠加大单页减少页数）；
-  2. 实测单页 0.23~1.0s、30 页合计 **7.6s**，而单页超时原设 20s——某一页卡住能把整轮拖成近乎无上限的等待；
-  3. 最要命的是缓存策略：磁盘缓存 24h 过期后 `readMarketCache()` **只返回 `{stale:true}` 不带数据**，于是「过期后的第一次打开」必然同步等满整轮拉取——用户每次隔天/重开第一眼撞到的都是这 7.6s。
-- **过期也秒回**：`readMarketCache()` 过期时改为「带数据 + `stale=true`」返回；`buildMarket` 拿到过期目录**立即返回**（前端顶部显示「⚠ 目录已过期，正在后台更新…」），同时在后台静默跑一轮刷新（`scheduleMarketRefresh`，带并发去重，同一时刻只跑一轮）。
-- **启动预热**：新增 `warmMarketCache(ctx)`，插件挂载后 8s 检查缓存，缺失/过期就在后台拉一次写盘——用户真正点开市场时缓存已是最新，**等待归零**。
-- **前端静默重取**：拿到 `stale` 目录 12s 后自动再请求一次（非强制刷新，命中的是后台刷新刚写好的新缓存），用户不必手动点 ⟳。
-- **单页超时 20s → 8s**；新增 `fetchRegistryEx` 页级容错：中途某页失败时保留已拿到的页并置 `complete=false`，**残缺目录绝不写盘覆盖完整旧目录**（只 `complete` 才 `writeMarketCache`）。
-- 生效方式：`lib/client.js` 改动 **Ctrl+Shift+R** 硬刷新；`lib/index.js` + `lib/market.js` 属宿主侧，需**彻底退出 DSH 再启动**。
-
-## 2.2.10 (2026-11-14) — 治「界面发白 / 干等」：首帧先用本地缓存，宿主没就绪不再报红
-
-- 用户实测：DSH 重载后打开面板出现整页空白 + 红字「加载失败：宿主还没就绪」，且「刚重载也得等一会」。
-- **根因**：宿主（lib/index.js）重载期间 `/skills` 路由尚未注册，客户端 `load()` 重试 3 次（约 2.4s）耗尽后走硬错误分支 → 顶部红字 + 中间错误块 + 空面板（用户看到的「发白」）。
-- **客户端本地缓存**（新增 `localStorage["dsh-sb-skills-cache"]`）：
-  - 首次加载且尚无数据时，先用上次成功的技能列表渲染 → **打开面板立刻有内容**，不再白屏干等；
-  - 真数据回来后自动覆盖并更新缓存；配额超限/隐私模式静默跳过，不影响主流程。
-- **重试加长**：`LOAD_TRIES` 3 → 6，退避 400/800/1200/1600/2000/2400ms（约 8.4s），覆盖宿主重载窗口。
-- **有缓存时不报硬错**：重试耗尽仍连不上、但手里有缓存 → 保留列表内容，只弹一个柔和 toast「宿主未就绪，当前显示上次缓存」，顶部副标题显示「⚠ 宿主未就绪，显示上次缓存 · 正在重连…」，不再整页红字。
-- **自愈扩展**：`healLoad()` 原来只在硬错误态下重试，现在「正在显示缓存」态也会在面板重新可见/窗口聚焦时自动重连。
-- **MCP 显示不全**：根因是 v2.1.0 的 MCP 延迟启动（服务延迟 15s 拉起），刚开机打开 MCP 页只能拿到部分已就绪服务且不会自动再刷。现进入 MCP 页时若仍有服务未连接，自动轻量轮询补齐（4s 一次、最多 6 次，全部就绪或切走即停）。
-- 纯客户端改动（lib/client.js + package.json + lib/index.js 版本号）：Ctrl+Shift+R 硬刷新生效。
-
-## 2.2.9 (2026-11-13) — 改回全量渲染（撤销 v1.9.6 分片），保留全部新功能
-
-- 用户反馈：技能悬浮球界面丢失发白、MCP 显示不全、技能调用卡顿，「还是前几个版本的加载模式比较方便」。
-- **根因**：v1.9.6 的分片渲染（一次 60 张 + 滚动追加 + 加载更多）+ 每次交互 `innerHTML` 全量重建 = 发白 + 卡顿。
-- **改回全量渲染**（1.9.6 之前模式）：
-  - 删 `cardLimit` / `cardSig` / 滚动追加监听 / 「加载更多」按钮（卡片部分）
-  - `paintCards()` 一次性渲染全部卡片，不再 slice(0, 60)
-  - **保留**：卡片磁盘缓存（2.1.0）、MCP 延迟启动（2.1.0）、分组/搜索/排序/面板两块切换（2.2.8）、一键检查更新（2.2.7）、深浅主题适配（2.2.7）等全部新功能
-- 流水分片（`lflowLimit` 120 行/次）**保留不变**——那是台账流水，不是技能卡片。
-- 纯客户端改动：Ctrl+Shift+R 硬刷新生效。
-
-## 2.2.8 (2026-11-13) — 悬浮球导航改「两块切换」：点一下换页，不用下翻
-
-- 用户要的是**「作者插件」与「插件版本」两个大块之间切换**，不是版本列表内部再分核心/工具/扩展（2.2.7 做错了，已撤销——那 3 个 Tab 全部移除，版本列表恢复 15 行平铺）。
-- 两块之间新增切换条（圆角胶囊 ×2），**一次只显示一块**：`#dsb-author-block`（13 行作者插件）/ `#dsb-pu-host`（15 行插件版本），点一下就换页，整块内容一屏看完，不用滚动。
-- 记忆上次停留的页（localStorage `dsh-sb-page`，默认「作者插件」）；按钮高亮跟随当前页。
-- 切换条由 React 渲染、`sbPageApply()` 负责显隐，React 重渲染后自动重新应用，不会把 display 带回去。
-- 插件版本块去掉自带 borderTop/marginTop（切换条已在上方分隔）。
-- 纯客户端改动：Ctrl+Shift+R 硬刷新生效。
-
-## 2.2.7 (2026-11-13) — 插件版本块重构：一键检查 + Tab 分组 + 主题适配
-
-- **一键检查更新**：标题行右侧新增「一键检查更新」按钮，并发 5 检查全部 15 个插件，按钮文字实时显示进度（检查中 n/15）；汇总显示「已装 n/15 · 可更新 m」。
-- **删掉每行单独「检查」**：15 个逐个手点的检查按钮全部移除；每行改为「本地版本 → 最新版本 + 状态」，有新版且可装时才出现「更新到 vX」按钮。
-- **Tab 切换不翻页**：15 行按核心（三球+字体+模型折叠）/ 工具（收藏/灯箱/文献/日历/哨兵）/ 扩展（中枢/播放器/编排/联动/套件）分 3 组，点 Tab 同页切换（不改路由）；某组内有可更新插件时 Tab 上出红点；记忆上次停留的 Tab。
-- **打开面板秒显版本**：检查结果缓存 localStorage（`dsh-upd-ver-<pkg>`，6h TTL 与自动检查同口径），打开面板先回填缓存、过期项静默重查——不再出现「15 行全是 v—」。
-- **深浅主题双适配**：原按钮边框 rgba(255,255,255,.14) 与成功/失败/最新版配色是深底色系，浅色主题下边框不可见、绿/红/黄字对比度不足（用户截图实证）；现按 prefers-color-scheme 出两套配色。
-- 删掉「悬浮球」小标题右侧的 ⟳（只查 dsh-skill-browser 自己，与一键检查重复）；面板工具条自己的 ↑ 检查按钮与 dshUpdAutoCheck 自动探测不受影响。
-- 纯客户端改动（lib/client.js + package.json）：Ctrl+Shift+R 硬刷新生效。
-
-## 2.2.6
-
-### 文档修正（功能一致性审计）
-- 皮肤菜单列数改正：**8 列**（原文档写 6 列）。
-- 「头部按钮全部为黑白线性 SVG」改为「基本为 SVG，检查更新按钮用 **↑ 字符**」。
-- README 与快速上手补给「检查更新」四态（检查中 / 有新版本变红加红点 / 已是最新 / 检查失败）、「再点一下即更新、装完需彻底退出 DSH」。
-- 退避口径改正：**两次重试（400ms / 800ms 等差）**，原写「3 次指数退避」。
-
-## 2.2.5
-
-- 修「打开面板偶发 加载失败: bad response，刷新一下才好」：`load()` 增加 HTTP 状态码校验 + 两次重试（400ms / 800ms，`400*attempt` 等差递增，即首次尝试后再试 2 次），失败文案区分「宿主还没就绪」与真实错误；面板重新可见 / 窗口聚焦时若处于失败态自动再拉一次，不再需要手动刷新。
-- `lib/index.js` 的 `VERSION` 从 2.2.3 补齐到与 package.json 同步（2.2.5）。
-
-## 2.2.4
-
-- 设置页导航图标改成悬浮球语义（圆环 + 中心点 + 轨道）：注册 `settings.section.icon` 槽（id 必须等于分区 id `dsh-skill-browser`），宿主不再回退通用齿轮。
-
-## 2.2.3 (2026-11-12) — 悬浮球导航标题行不再撑满
-
-- 「悬浮球」小标题右侧的 ⟳ 原先用 justify-content:space-between，把按钮推到面板最右边，看着像两个不相干的东西；改成 flex-start + gap 6px，按钮紧跟标题。
-- 纯样式改动：Ctrl+Shift+R 硬刷新生效。
-
-## 2.2.2 (2026-11-12) — 头部图标行放大
-
-- .dsb-headbtns .dsb-btn 由 padding:3px 9px;font-size:11px 放大到 padding:5px 10px;font-size:16px，图标 SVG 13px → 16px，按钮最小 30x26（用户反馈「图标太小」）。
-- 只影响技能浏览器面板右上角那一排图标，其它插件面板不受影响。
-
-## 2.2.1 (2026-11-12) — 悬浮球小标题加检查更新按钮 + 下载数改深蓝
-
-- 悬浮球导航分区顶部小标题「悬浮球」右侧新增 ⟳（id=dsb-upd-head，带 data-dsh-upd），与各插件面板头部同一套行为。
-- 作者插件列表的下载数与 ⬇ 图标统一改深蓝 #2563eb、字号 11.5px、字重 600（原浅蓝 #8fb4ff 偏淡）。
-- 纯客户端改动：Ctrl+Shift+R 硬刷新生效。
-
-## 2.2.0
-- v2.2.0：任何元素只要带 data-dsh-upd 就自动变成「检查更新」入口（全局委托 + window.__dshUpdClick）；头部选择器扩到 panel-head / -head，播放器等面板也能挂按钮。
-
-## 2.1.9
-- v2.1.9：检查更新加自动探测（面板打开 5s 后静默查，每包 6 小时一次，10 分钟轮询）；有新版变红 + 红点；注入的按钮复制同行按钮的 class/尺寸，风格统一。
-
-## 2.1.8
-- v2.1.8：检查更新提示改为行内浮标（不再弹系统对话框）；404/缺字段时明确提示「接口不可用（宿主未重启）」；通用注入扩展到终端哨兵/深度求索网页/模型折叠/侧栏播放器/归档/语音提醒等面板，优先插入头部按钮行，次选面板首个按钮之前。
-
-## 2.1.7
-- v2.1.7：面板头部加「检查更新」按钮（↑）；其余面板（模型折叠/深度求索/终端哨兵/侧栏播放器/归档/语音）通用注入同款按钮，插入头部按钮行，不遮挡内容。
-
-## 2.1.6
-- 新增「插件版本」面板块（悬浮球导航分区底部）：15 个 UI 插件逐行显示本地版本 / npm 最新版，各自一个「检查」按钮，落后时变成「更新到 vX」。
-- 新增共用后端 lib/selfupdate.js：GET /plugin-update?pkg= 查 npm（npmmirror → npmjs 兜底，10 分钟缓存）；POST /plugin-update-apply?pkg= 真安装（registry 直装，套件型则改套件依赖版本后 pnpm install）；GET /plugin-update-log 看最近一次日志。
-- 安全边界：link/file 本地开发版拒绝覆盖安装；装前备份 profile package.json；pnpm/npm 均 windowsHide（本族不得弹控制台窗）；不自动重启 DSH，装完提示彻底退出重启。
-
-## 2.1.5
-- 修复 2.1.4 引入的回归：下载量回填函数被误插进「子类行」渲染块，导致悬浮球导航分区模板报错、整个分区空白；已移到模块作用域（与 SettingsSection 同级），并恢复子类行渲染原状
-## 2.1.4
-
-- 作者插件列表新增「累计 / 近 30 天」下载量切换（记忆选择；排序始终按累计下载固定，避免列表跳动）
-- 宿主 `/author-stats?range=month` 走 npm `last-month` 点位，两套各自 10 分钟缓存
-## 2.1.3
-
-- 作者插件列表：套件置顶，其余按 npm 累计下载量降序（字体 6135 / 技能浏览器 5723 / Todo 5152 / 模型折叠 4289 / 语音 4241 / 归档 3535 / 灯箱 3052 / 文献 2078 / 日程 1197 / 哨兵 980 / 浏览器中枢 785；技能守卫未上架记「本地」）
-- 下载量改为实时：宿主新增 `GET /dsh-skill-browser/author-stats`（抓 api.npmjs.org，10 分钟内存缓存），客户端打开设置分区后就地回填 `⬇N` 与「截至日期」
-
- 
-## 2.1.2 — 2026-11-12
-
-### 修正
-- **「作者插件」13 条介绍按真实功能重写**（此前偏笼统）：字体插件强调分区 DIY、技能浏览器强调技能浏览 + MCP 开关、灯箱写清缩略图网格与灯箱翻页、`dsh-lit-fetch` 改正为「文献下载」（它不是网页正文抓取）、模型折叠写清测活与图片/思考强度开关、控制台哨兵写清窗口清理范围、归档收藏写清删除归档与撤回快照回退、日程日历写清邮件查收与纪念日。
-- **每条末尾加 npm 累计下载量**（悬停显示「截至 2026-11-12」），并在 5 张推广卡文案里同步带上数字。
-
-## 2.1.1 — 2026-11-12
-
-### 新增
-- **「作者插件」列表新增作者套件**：列表首条加入 `dsh-loyalchiiina-plugin-pack`（一键装齐作者全套 14 个插件），可直接点开仓库。
-- **设置面板推广卡更新**：从 3 张扩到 5 张——作者套件 / 技能与 MCP 浏览器 / 照片显示器 / 字体插件 / Todo 悬浮球，文案同步到当前版本能力（卡片缓存秒开、MCP 静默延迟启动、皮肤按需加载）。
-
-## 2.1.0 — 2026-11-12
-
-### 新增
-- **卡片磁盘缓存**：首开面板直接读 `cards-cache.json` 渲染，3s 后后台静默重扫；详情仍按需加载，刷新按钮 (`?refresh=1`) 立即全量重扫。
-- **MCP 延迟启动**：MCP 管理页的 10 个服务改由 `mcp-defer/mcp-launch.exe`（GUI 子系统静默启动器，`CreateProcess` + `CREATE_NO_WINDOW` + 继承 stdio 管道）延迟 15s 拉起，**全程不弹任何控制台黑框**；DSH 启动不再被两套 Ansys FastMCP 拖慢。调延时改 profile 里各条目的 `args[0]`（秒）。
-
-### 文档
-- README / README-zh 补充「卡片缓存与启动加速」「MCP 延迟启动」两节，并写明「技能更新时间」= 扫描时读 mtime，非实时监听。
-
-## 2.0.15 — 2026-11-10
-
-### 变更
-- **市场宣传图清单精简为 6 张并重排顺序**（`screenshots.json`，8 项 → 6 项）：
-  - 顺序：`shot-11`（快速上手 + 皮肤选择器）→ `shot-06`（调用台账·统计）→ `shot-12`（**市场** Tab · MCP 市场）→ `shot-13`（**MCP 管理** Tab）→ `shot-05`（MCP 详情 + 信息面板）→ `shot-01`（技能浏览·网格）。
-  - 依据上游与客户端实测：市场卡片**只取前 3 张**、详情页最多 **6 张**（客户端硬上限 `MAX_SCREENSHOTS = 6`），**第 7、8 位在 DSH 市场里永远不会显示** —— 8 项中有 2 项白占位置。`shot-09`、`shot-10` 两张弹窗图退出清单（**文件仍保留**，`README.md` 画廊 13 张不变）。
-
-### 修复
-- **三张旧图里露出的本机绝对路径与 Windows 用户名已打码**：`shot-09` / `shot-10` / `shot-11` 中的 `C:\Users\<用户名>\AppData\Roaming\npm\…`、`E:\fluent-mcp\.venv\Scripts\…`、`…\ansys-mcp\ansys\workbench\…` 等明文，已就地做马赛克覆盖（**只打码、不裁图、不改尺寸**：1210×859 / 1191×863 / 1265×885）。`shot-13` 底部露出的部署路径同批保留马赛克。
-- 本版**无功能代码改动**：仅为带上「精简后的清单 + 打码后的图」重发 npm（npm 同一版本号不能重复发布，故版本号前进一版）。功能内容与 2.0.14 完全一致。
-
-## 2.0.14 — 2026-11-10
-
-### 变更
-- **宣传图更新：补上「市场」与「MCP 管理」两张新界面图**。
-  - 新增 `docs/images/shot-12.png`（**市场** Tab · MCP 市场：全部免费 · 显示 151 / 库 883 · 19 大类平铺分类带数量 · 列表视图 · 免费/需 Key/npm/需 env 标签 · 已装 ✓ 卸载 / 安装按钮 · 每条 MCP 用其自身真实图标）。
-  - 新增 `docs/images/shot-13.png`（**MCP 管理** Tab：共 10 个 MCP · 已连接 8 个 · 191 个工具 · 树状/卡片切换 · 每行 3/4/5）。该图已对底部露出的本机部署路径做马赛克处理。
-  - `screenshots.json` 由 6 项增至 **8 项**；`README.md` 效果图引用由 11 张增至 **13 张**。
-  - 说明：原有 `shot-01` ~ `shot-11` 均保留（未删除）。它们摄于 v2.0.2 时期，Tab 栏只有四个、**没有「市场」**；如需与 2.0.14 界面完全对齐，可后续重拍覆盖同名文件，届时不必再改引用。
-- 本版**无功能代码改动**：仅为带上新宣传图重发 npm（npm 同一版本号不能重复发布，故版本号前进一版）。功能内容与 2.0.13 完全一致。
-
-## 2.0.13 — 2026-11-10
-
-### 新增
-- **所有「刷新」都有即时反馈**：之前点刷新没有任何提示，用户不知道刷没刷、刷了什么。现在四个 Tab 的刷新都会**先 toast「正在刷新 …」，完成后再 toast 结果**：
-  - 右上角刷新钮：按当前 Tab 分别提示「正在刷新技能库 / 调用台账 / MCP 列表 / 市场目录」，完成后报「技能库已刷新：共 N 个技能」「调用台账已刷新：人工记录 N 条 · 自动调用 M 条」「MCP 已刷新：共 N 个 · 已连接 M 个」「市场目录已刷新：共 N 个 · 免费 M 个」。
-  - 市场工具条的「⟳ 刷新」、MCP 工具条的「刷新」同款。
-  - 失败时红 toast 报原因（如「刷新失败：…」）。
-- 内部静默刷新（安装后自动重载、首载、切 Tab）**不弹提示**，只有用户主动点击才提示，避免噪音。
-
-## 2.0.12 — 2026-11-10
-
-### 修复
-- **市场工具条切「网格/列表」时按钮跳动**：根因是「列 3/4/5/6」选择器只在网格模式渲染、列表模式消失，导致整行宽度变化、搜索框和按钮跟着重排。改为**网格/列表两种模式都固定渲染列选择器（同宽）**，列表模式下点「列 N」会**自动切回网格并应用该列数**；搜索框 `flex` 基准固定为 `180px`（`min/max-width` 不变），不再随存在与否拉伸。切换查看方式时整条工具条稳定不跳动。
-- 顺带确认：列表模式下列选择器保留交互（点击生效）。
-
-## 2.0.11 — 2026-11-10
-
-### 修复
-- **MCP Tab 卸载后切回市场仍显示「已装✓」（残留）**：市场「已装/未装」判定原依赖缓存的 `H.installed`（由 `refreshInstalledMap` 按 `serverName` 建），存在时序过期风险。现新增 `homeIsInstalled(name)` —— 判定时**实时遍历最新 `S.mcp.data.servers`**（按 `serverName` 匹配），只要运行时里已经没有该条，市场按钮立刻回到「安装」，不再信任可能过期的缓存；`S.mcp.data` 未就绪时才退回缓存键（尽力而为）。
-- 连带保证：市场排」已装在前」的 `homeFiltered` 排序、卡片按钮（`homeActionHtml`）判定都改走 `homeIsInstalled`，与运行时完全一致。
-
-## 2.0.10 — 2026-11-10
-
-### 修复
-- **市场安装 / 卸载后按钮不即时刷新**：`doHomeInstall` / `doHomeUninstall` 成功回调里增删 `H.installed` 后没有立即 `paintHome()`，只靠 `setTimeout(loadHome, 800)`，而 60s 缓存会提前 return —— 现在立即重绘，并用 `mcpPollUntil` 轮询到该条目在运行时真正出现/消失后再重建已装集合并重绘（消除 loadMcp 的 refreshInstalledMap 在热重载未完成时把刚加条目冲掉的竞态）。
-- **MCP Tab 卸载后切回市场「已装」不同步**：`runMcpUninstall` 成功回调现在轮询到条目从运行时消失后 `refreshInstalledMap()` + `paintHome()`。
-- **MCP Tab 启用后市场「已装」不自动刷新**：`doMcpToggle` 的轮询收敛回调里补上 `refreshInstalledMap()` + `paintHome()`（enable 的条目进 installed、disable 的移出）。
-- **每次切进市场都先用最新 MCP 运行时重建已装集合**：`paint()` 的 `isHome` 分支在处理前先 `refreshInstalledMap()`，保证 MCP Tab 里任何增删启停在切回市场时立刻反映。
-
-## 2.0.9 — 2026-11-10
-
-### 修复
-- **市场页永远没有滚动条（重启多少次都一样）**：根因是 `buildPanel()` 里 `#dsb-home-bar` / `#dsb-home-cats` / `#dsb-home-cards` 三个子容器**只写了 id、没有写 class**，而全部样式规则用的是**类选择器** `.dsb-home-bar` / `.dsb-home-cats` / `.dsb-home-cards`。于是 `flex:1` / `min-height:0` / `overflow-y:auto` 一条都没生效，卡片区高度不受约束、永不溢出、永不出现滚动条。已给三个容器补上对应 class，滚动链（`#dsh-skill-browser-panel` 定高 → `#dsb-built` flex:1 → `#dsb-home` flex:1/min-height:0 → `.dsb-home-cards` flex:1/min-height:0/overflow-y:auto）这才真正接通。
-- **分类数量与列表条数对不上**：分类 chip 的数量改为**跟随当前「仅免费 / 全部」筛选实时重算**（用 `H.data` 在前端统计），保证「chip 上的数字 = 点进去实际看到的卡片数」；当前筛选下没有条目的分类直接隐藏，不再出现「chip 写着 N 却一张卡都没有」。
-- **顶部统计口径含混（「共 882 个」vs「全部 151」）**：改为 `显示 151 / 库 882 · 免费 151 · 已装 10`，一眼能看出当前筛选显示多少、库内总量多少。
-
-### 变更
-- **「列 3/4/5/6」+「刷新」收进右侧组**：新增 `.dsb-home-rgroup{margin-left:auto;display:flex;flex-wrap:nowrap}`，两者固定在工具条同一行的最右端，不再折到第二行左侧。
-
-## 2.0.8 — 2026-11-10
-
-### 变更
-- **市场分类 chip 标注该分类的 MCP 数量**：与技能页分类数量一致，每个分类名后用灰色小字显示 Registry 里该分类的真实条数（如「全部 882 / 文件系统 11 / 代码仓库 9」），数量来自后端 `buildCategories` 的 `count`。
-- **市场页标题图标改为 ◈ 六边形**：从 🧩（拼图）改为空心六边形，更简洁高级，契合「生态 / 聚合」语义。
-- **市场卡片名称放大加粗**：`.dsb-home-card .dsb-card-name` 字号 11px → 13.5px、`font-weight:700`，仅作用市场卡（技能页同名类不受影响）；版本徽章（`.dsb-ver` / `.dsb-ver-none`）保持 10.5px 常规字重以区分层级。
-
-### 修复
-- **列表模式「只显示 3 张、无滚动条」排查**：诊断确认磁盘代码（`paintHomeCards` 列表/网格共用 `homeFiltered()` 全量 forEach、无截断；`#dsb-home`/`.dsb-home-cards` flex 滚动链完好）并无缺陷，现象来自加载了旧 client bundle，需彻底重启 DSH 而非软刷新。
-
-## 2.0.7 — 2026-11-10
-
-### 修复
-- **市场卡片与技能卡不统一**：市场卡原本用自成一派的 `.dsb-home-badge` / `.dsb-home-ver` / `.dsb-home-tags`，「列表」模式还是整行横排的 `.dsb-home-row`，与技能浏览的卡片观感差得很远。现改为**逐字复刻技能卡**：同一套 `.dsb-card` / `.dsb-card-name` / `.dsb-card-zh` / `.dsb-card-tag` / `.dsb-card-mtime` / `.dsb-card-foot` / `.dsb-card-gtag` / `.dsb-ver` / `.dsb-badge-off`，同样的字体、字号、圆角、hover 与行数截断；列数切到 1 时就是技能卡的竖排列表。
-- **市场卡把图标 URL 当文本渲染**：`esc(s.icon || "")` 直接把 registry 的 `icons[].src` 当字符串打进 `.dsb-card-name`，界面上因此出现一长串 `https://…/favicon.svg` 字面文本。改为按图标类型渲染：URL → `<img>`，否则当 emoji。
-- **市场按钮样式与技能卡不一致**：安装 / 卸载按钮原为自建 `.dsb-home-btn`，现统一复用技能卡的 `.dsb-movebtn`（同款边框、圆角、字号），仅「卸载」额外加红调。
-- **`.dsb-card-zh` 被市场样式全局覆盖成 3 行**：该规则是全局选择器，会连带把技能卡描述行数从 2 行改成 3 行。已移除该覆盖，两处卡片统一 2 行截断。
-
-### 新增
-- **MCP 各用自己的真实图标**：新增 `homeIcoUrl()` / `homeIco()`，按优先级取图标 —— ① registry 自己登记的 `icons[].src`（官方 logo）② 其 GitHub 属主头像 `https://github.com/<owner>.png` ③ 其主页站点的 favicon（`icons.duckduckgo.com/ip3/<host>.ico`）④ 分类 emoji 兜底。`<img loading="lazy">` 懒加载，`onerror` 自动降级为分类 emoji，绝不再统一塞一个 🧩。
-- **精选条目支持自带 `icon` 字段**：`market-curated.json` 的条目可填真实 logo URL，`curatedToEntry()` 会原样透传给前端（留空则由上面第 ②③ 级回退推断）。
-
-## 2.0.6 — 2026-11-10
-
-### 新增
-- **「市场」Tab = MCP 市场（第 5 个 Tab，位置在快速上手之后）**：数据源两条 —— ① 官方 MCP Registry（`https://registry.modelcontextprotocol.io/v0/servers`，分页 `limit=100`，去重后约 600+ 个 server）；② 本地精选免费目录 `lib/market-curated.json`（29 条，npm 24 / pypi 5，全部包名已实盘验证存在），精选优先并去重。
-- **19 大类分类 + 树状/平铺双视图**：文件系统 / 数据库 / 开发工具 / 网页与搜索 / 浏览器自动化 / 代码仓库 / 文档与办公 / 云服务与部署 / 通信与邮件 / 图像与多媒体 / 知识与记忆 / 任务与自动化 / AI 与智能体 / 金融与交易 / 地理与地图 / 教育与学习 / 运维与监控 / 安全与身份 / 其他。
-- **卡片排布仿技能卡**：网格 / 列表双模式；列数 3~6 可选（`localStorage` 键 `dsb-home-cols`）；搜索框 300ms 节流；「仅免费 / 全部」范围筛选（默认仅免费）；已装条目标「已装 ✓」。
-- **一键安装**：点「安装」→ 需要环境变量（needsKey / envRequired）时先弹层填 Key → 后端把条目写进当前 profile 的 `cordis.patch.yml` 的 `- insert:` 块（写前自动备份到 `~/.dsh/backups/`）→ DSH 补丁层热重载生效。Windows 下 npm 包用 `node.exe + npx-cli.js` 启动（stdio 走 spawn 不经 shell，直接写 `npx` 会失败），pypi 包用 `uvx`，可执行文件路径运行时探测。
-- **一键卸载**：复用既有 `uninstallMcp`，缩进感知删除整条条目 + 清空壳 `- insert:` + 从受管块移除同名覆盖 + 写前备份。
-- **市场数据磁盘缓存**：`~/.dsh/data/dsh-skill-browser/market.json`，24 小时有效；网络失败降级用旧缓存并标 `stale`，无缓存时只显示精选目录。
-- **免费口径**：npm / pypi 本地可运行包 = 免费可装；只有远程 HTTP 的标「远程·需自备 Key」，不可直接安装。
-- **滚动位置记忆覆盖「市场」Tab**：关闭面板再打开回到原处。
-
-### 修复
-- **宿主热重载静默失败（新路由持续 404）**：`lib/market.js` 静态 `import { dataDir } from "./mcp.js"` 而 `mcp.js` 未导出 `dataDir`，Node ESM 链接期抛 `SyntaxError`，补丁层热重载因此静默失败（`LIVE.gen` 不递增、新路由 404）。已给 `mcp.js` 的 `dataDir` 加 `export`，并让 `market.js` 改为带 `RELOAD_V` 版本查询串的动态 import，避免命中启动时缓存的旧 `mcp.js` 模块实例。
-- **「市场」Tab 永久卡「加载中…」**：`paintHome()` 在数据未就绪时直接 `homeEl.innerHTML = ...` 整体覆写 `#dsb-home`，把 `#dsb-home-bar/cats/cards` 三个子容器销毁；数据到达后 `paintHomeBar/Cats/Cards` 全部因容器不存在静默早退、无法绘制。改为新增固定状态容器 `#dsb-home-state`：加载/错误/空态只写该容器、仅切换三个子容器的 `display`，**绝不整体覆写 `#dsb-home`**；并给三个 paint 函数的 `if(!el) return` 早退补一次性 `console.warn`，防止同类静默早退再次瞒过排查。
-
-### 说明
-- 精选目录 `lib/market-curated.json` 的包名逐条对 npm registry / pypi 探测验证；首版曾收录 17 个 npm 上已不存在的 `@modelcontextprotocol/server-*` 套件，已剔除或改用 Python 版（`mcp-server-fetch` / `mcp-server-git` / `mcp-server-sqlite` / `mcp-server-time`）。
-
-## 2.0.5 — 2026-11-10
-
-### 变更
-- **卡片每行列数改为「起步—封顶」区间**：技能列表「每行」只保留 **3 / 4 / 5 / 6**，MCP 卡片只保留 **3 / 4 / 5**（用户要求 3 起步、技能 6 封顶、MCP 5 封顶）。原来的「自」（自适应 `auto-fill`）和 2 列已移除 —— 自适应在宽屏下会摊成十几列，卡片被压得只剩标题，2 列又太浪费横向空间。
-- 两端默认值统一为 **3 列**（`S.cardCols` 与 `M.cols` 的默认值由 `0` 改为 `3`），旧 `localStorage` 里的 `"auto"` / `0` / `2` 会被初始化逻辑判为越界并归一到 3，不会渲染成空白列或半边空白。
-- **写入端与读取端同口径**：点击列数按钮时不再用 `parseInt(...) || 0` 兜底，改为与初始化一致的白名单校验（技能 3~6、MCP 3~5），异常值直接落 3。这样即使 DOM 属性被外部改坏，也不会落库成 `0` 从而退回 `auto-fill` 自适应（宽屏下卡片被摊成十几列）。
-- 引导页第 ③ 步里的「每行 N 列（自适应 / 2~6）」同步改为「（3~6）」，避免图文与实际不符。
-
-## 2.0.4 — 2026-11-10
-
-### 修复
-- **点停用 / 重连后列表跳回最上方**：`paintMcpNow()` 用 `host.innerHTML` 整体重建，`.dsb-mcp-grid` / `.dsb-mcp-tree` 被销毁重建，滚动条随之归零；而启停后的收敛轮询会连着重绘十几次，用户看到的就是「一点开关就跳回顶部，还得重新往下滚」。现在重绘前记录滚动容器的 `scrollTop`、重绘后写回；轮询也只在「启停 / 阶段 / 工具数」这类可见状态真的变化时才重绘（`mcpDataSig` 快照比对），不再每 700ms 闪一次。
-- **404 `unknown path` 直接甩给用户**：宿主端插件未重载时新加的路由注定 404。现在识别到该错误就翻译成「宿主端插件还是旧代码，请点 ⚡ 热重载或彻底重启 DSH 后重试」，启停 / 重连 / 卸载 / 清空统计四处统一走 `mcpFailToast`。
-- **MCP 卡片按钮不齐（不管几列都该对齐）**：`.dsb-mcp-acts` 原来是 `margin-top:2px`，按钮紧跟在上方内容后面，卡片内容长短不同就导致同一行里按钮的纵向高度、横向起点各不相同。改成与技能卡 `.dsb-card-foot` 同一套口径 —— `margin-top:auto` 贴卡片底部（同一行卡片等高，所以纵向对齐）、`padding-top:8px`、`justify-content:space-between` 铺满整行（同行卡片宽度相同，所以逐列横向对齐），列数变化不影响对齐。
-- **分组栏滚动位置不记忆**：`#dsb-groups` 是 `max-height:220px;overflow-y:auto` 的独立滚动容器，任何 `paint()` 都会重建它，此前既没保位也没纳入滚动记忆。现在重建前存 `scrollTop`、重建后写回，并单独用 `groups` 键存取（不再与技能卡列表共用 `skills` 键），滚动监听也改成每个容器各自节流。
-
-### 新增
-- **面板记住上次滚动位置**：关闭面板时把当前视图（技能 / 台账 / 快速上手 / MCP）的滚动位置写入 `localStorage`（键 `dsb-scroll-v1`），再次打开自动回到原处，不必每次从上往下翻。技能卡、台账、快速上手各用自己的滚动容器，MCP 取当前 grid / tree 容器，分组栏单独用 `groups` 键；异步内容还没渲染出高度时保留 pending，等下一次重绘或定时器再落位，不会把位置夹成 0。
-
-## 2.0.3 — 2026-11-10
-
-### 修复
-- **停用 / 启用 MCP 后滑块不动（必须刷新页面才移动）**：原实现是「写盘 → 等 900ms → 单次 refetch」。但链路是「写盘 → DSH 用户补丁层热重载 → loader entry 状态变化」，MCP 子进程卸载普遍慢于 900ms，refetch 读回的还是旧状态，重绘后滑块弹回原位，之后不再有任何请求，只能手刷页面。
-  现在改成三步：① **乐观更新**——点击后滑块立即跟随，不等网络往返；② **轮询收敛**——成功后每 700ms 重读一次运行时状态（上限 12 次 ≈ 8.4s），一旦 `disabled` 与目标一致立即停；③ **超时明示**——8.4s 仍未同步时弹提示「配置已写入，但热重载未完成，稍后点刷新或彻底重启 DSH」，不再静默弹回。失败自动回滚并恢复原状态。重连同样改为轮询到 `phase` 离开 `loading/pending`。
-
-### 新增
-- **MCP 卸载（卡片 / 树状按钮区「导出」右侧）**：二次确认后把该条 MCP 从 profile 补丁文件里**真正删掉**（不是禁用）。宿主侧 `uninstallMcp()` 做缩进感知的文本级删除：条目既可能顶级 `- id: xxx`，也可能挂在 `- insert:` 下（4 空格缩进），一律按「从 `- id:` 行起吞掉更深缩进的内容行」定位；有三种连带物一并处理——① 条目上方专属注释（注释里出现该 id / 去掉 `mcp-` 前缀的主体才认领，避免误删通用注释）；② 父级 `- insert:` 删完若只剩空壳（无兄弟条目、无其它内容）连父级行一起删，否则 YAML 留下 `insert: null` 会让 loader 报错；③ 受管覆盖块里残留的同 id `disabled` 覆盖一并清掉，不留死引用。写盘前自动备份到 `~/.dsh/backups/`，前端乐观移除条目，失败自动塞回列表。
-  新增路由 `POST /dsh-skill-browser/mcp/uninstall`。内置层 / npm 包自带的条目无法用文件覆盖删除，弹层里会明确提示改用「停用」。
-
-### 校验
-- 在真实 `cordis.patch.yml`（5468 行 / 446 个 loader 条目`副本`上演练：删除 `mcp-ansys-fluent` 与 `mcp-ansys-workbench` → 各删 25 / 22 行，父级 `insert:` 与专属注释一并清掉，其余 4 个官方 MCP 条目与全部中文注释完好；js-yaml 解析通过（顶层 40 → 38 项，**无 `insert: null` 空壳**）；重复删除同一 id 幂等返回 `removed:false`；受管块 3 个 id → 2 个。
-
-## 2.0.2 — 2026-11-08
-
-### 文档 / 截图
-- **README 功能描述重写**：一句话简介加入 MCP 管理 / AI 分组缓存与计时；「三个 Tab」→「四个 Tab」并补 MCP 行；新增「🔌 MCP 管理」章节（真实配置 / 状态 / 工具 / 统计 / 启停 / 重连 / 导出 / 本机扫描 / AI 修复）。
-- **效果图全面替换**：删除旧 `docs/images/panel-browse.png`、`panel-ledger.png`，改为 11 张新截图 `docs/images/shot-01.png … shot-11.png`。
-- **插件内「快速上手」7 步 → 8 步**：补 MCP 管理、全部展开/收起、每行 N 列、AI 分组缓存与计时、「清除缓存并重新生成」。
-- **`locale/zh.json` / `locale/en.json` 描述补齐**：MCP 扫描、AI 修复、AI 分组结果缓存与计时浮窗。
-
-## 2.0.1 — 2026-11-08
-
-### 修复
-- **npm 包体积修正**：`files` 白名单里的 `"lib"` 整目录会把 `lib/` 下 40 个 `client.js.bak-*` 历史备份一并打进包（包体积 3.7MB）。移除该条目，改为只收 `lib/**/*.js` / `lib/**/*.ps1` / `lib/orb/*.html`，包降到 ~806KB / 39 个文件。功能无变化。
-
-## 2.0.0 — 2026-11-07
-
-### 新增：MCP 管理（面板第 4 个 Tab，位于「调用台账」与「快速上手」之间）
-- **读取正在使用的 MCP 配置**：枚举运行时 `ctx.loader` 里每一个 `@deepseek-ai/dsh-mcp-client` 条目，返回真实合并后的配置（serverName / transport / command / args / cwd / url / env 键名），不是读文件猜测。`GET /dsh-skill-browser/mcp/servers`，页面右上「刷新」按钮即时重读。
-- **真实状态**：直接读 Cordis FiberState（pending / loading / active / failed），叠加 `disabled` 与已注册工具数，不再靠日志推断。
-- **工具清单与自动功能概括**：按 `mcp__<serverName>__` 前缀从工具注册表取每个 MCP 的工具与描述；按工具名/描述里的动词关键词自动归类（查询 / 执行 / 写入配置 / 删除停止 / 导出 / 文件 / 会话），生成「N 个工具，主要提供…能力」的概括。
-- **调用统计（落盘累计）**：监听官方 `tools/result` 事件，按 `mcp__<server>` 归类写入 `~/.dsh/data/dsh-skill-browser/mcp-calls.jsonl`（3MB 自动压实为最近 3000 条）。卡片显示累计/失败次数与最近调用时间，详情内显示工具调用排行与近 24 小时计数。提供「清空统计」。
-- **启停 / 重连**：停用/启用会写入 profile `cordis.patch.yml` 末尾一个带 `BEGIN/END` 标记的**受管覆盖块**（纯文本追加，幂等）；**不改写整份 YAML、不丢失任何中文注释**（`loader.update` 走 `yaml.dump` 会重写整文件并抹掉 3449 行注释，已排除）。DSH 用户补丁层支持 HMR，改完热应用、重启同样保留。重连走 Cordis Fiber 的内存重启（`fiber.update(config,true)`），不碰文件。
-- **导出**：反解为 Claude Desktop / Cursor 同构的 `mcpServers` JSON，一键复制；可选打码敏感环境变量。`GET /mcp/export?mask=0|1`。
-
-### 实现要点
-- 新增宿主子模块 `lib/mcp.js`（走 `RELOAD_V` 热加载，与 scan/groups 一致）；`lib/index.js` 增加 MCP 统计监听与 `/mcp/*` 七条路由；`lib/client.js` 增加第 4 个 Tab、卡片网格、状态胶囊、详情、导出弹层与事件委托。
-- 统计与主数据**分开请求**（`Promise.all`），统计失败不清空服务器列表。
-- 启停前自动备份 `cordis.patch.yml` 到 `~/.dsh/backups/`（保留最近 20 份）。
-
-### 追加（同日）：AI 分组提速 / 缓存 / 计时 + MCP 扫描与 AI 修复
-- **AI 分组提速**：补漏调用仅在遗漏 > 20 个技能时才执行；`reasoningEffort` 可压到 low（provider 不支持时自动去掉该参数并重试，实测 magpie 报 `UNSUPPORTED_REASONING_EFFORT` 已自愈）；超时放宽到 150s；模型流 abort 时自动重试一次。
-- **结果缓存**：按「技能目录集 + mode」指纹缓存 24 小时，命中直接复用、秒回不调模型；设置面板与分组方案弹层均可一键清除缓存。
-- **计时可视化**：分组进行中面板浮窗显示「已用 Xs ／ 预计约 40s」+ 进度条；完成后方案弹层显示累计用时；分组工具栏常驻「上次分组 X.Xs · 并行N批 / 串行」或「缓存 0.0s」，写入 localStorage，折叠 / 切走对话 / 重开面板均保留。
-- **AI 分组只读铁律（代码级约束）**：模型输入只允许元数据白名单（目录名 + 中文名 / frontmatter description 前 60 字 + 现分类），**绝不读取 SKILL.md 正文**，**绝不修改 / 移动 / 重命名 / 删除任何技能文件**；含行长断言兜底，超长即拒绝。
-- **并行分批**：技能数 ≥ 45 时最多 4 批并行分类，结果按同名大类归并去重；任一批失败自动回退串行单次（`PARALLEL_CLASSIFY` 单点开关可关）。
-- **MCP「🔍 本机 MCP」**：扫描 DSH 已配置的 MCP + 各 profile / 本地插件 / 全局 npm 目录里所有含 mcp 的包，列出「已配置 / 已装未配置」清单（只读）。接口 `GET /mcp/local-scan`。
-- **MCP「🛠 AI 修复」**：诊断异常 MCP（启动失败 / 调用失败 / 已停用），规则 + AI 给出修复动作（reconnect / enable / disable / clean），确认后执行；写配置前自动备份。接口 `GET /mcp/ai-diagnose`、`POST /mcp/ai-fix/apply`。
-- **修复「新建分组 / 重命名 / 新建子类」点不动**：Electron 不支持 `window.prompt`（静默返回空），改为面板内输入弹层（回车确认 / Esc 取消）。
-- **技能卡片开关对齐**：卡片等高 + 底部操作区 `margin-top:auto` 贴底，同一行内各卡开关滑块落在同一水平线。
-
-### 已知边界（本轮未做）
-- 「粘贴 JSON 一键导入」属 P2，暂未实现（导出已有，导入需写 insert 块，风险面更大，另行提交）。
-- 未提供新增/编辑/删除 MCP 的表单（需精确改写 109KB 补丁文件，误操作可致 DSH 起不来，暂不提供）。
-- 若某 MCP 来自内置层（不在用户 profile 补丁里），启停会返回「无法用文件覆盖」而不是冒险改内置层。
-
-## 1.9.11 — 2026-10-29
-
-### 面板 UI 精修 + 效果图替换 + README 重写
-- **README 以真实功能重写（中文为主）**：三 Tab（技能浏览 / 调用台账 / 快速上手）、分组管理、调用台账看板、130 款皮肤、7 步快速上手、悬浮球导航分区。
-- **效果图替换**：新增 `docs/images/panel-browse.png`（技能浏览）与 `docs/images/panel-ledger.png`（调用台账），删除旧图 `skill-browser-panel.png`。
-- **悬浮球导航分区**（DSH 设置页）：显隐开关 / 皮肤下拉 / 回到右下角 / 作者插件 12 款；皮肤菜单改为 6 列；图标统一为黑白线性。
-- `package.json` 版本 1.9.10 → 1.9.11，description 与 UI 对齐。
-
-## 1.9.10 — 2026-10-25
-
-### 修复
-- **品牌渐变底文字对比度按「最差端点」判色**：原来用渐变中点算白字对比度，但 `linear-gradient` 实际铺满 g1..g2 整条 ramp，浅色皮肤（04 全息幻彩 / 051 / 113–127 等）的中点达标而浅端只有 3.7–4.4:1。现改为 `worst(ink, g1, g2) = min(cr(ink,g1), cr(ink,g2))`，两个端点都 ≥4.6:1 才用白字，否则翻成近黑或按 0.05 步长压深整条渐变。**128 皮肤 × 两端点 = 256 项全部 ≥4.5:1。**
-
-### 文档（与实装功能对齐）
-- **`locale/zh.json` / `locale/en.json` 的 `meta.description` 重写**：原描述只写到「一级/二级分类 + 启停 + 失效台账」，完全没提 v1.9.0 之后新增的自定义分组、树状/平铺、版本号徽章、调用台账看板、⚡ 热重载、全皮肤自适应配色 —— 与实装功能严重不符。现按真实功能重写。
-- **`README.md`（主 README，英文为主）补全 v1.9.0–v1.9.9 全部功能**：新增「自定义分组」「树状 / 平铺双模式」「版本号徽章」「调用台账看板」「热重载」「性能」「全皮肤自适应配色」七节中文说明 + 对应 4 条英文 Highlights；API 表补 `/rev`、`/reload`、`/groups`（含 11 个 action）、`/ledger/stats`（含 `gran`/`sort` 参数），`/skills` 注明返回 `version` 字段。原来 API 表完全没有分组、统计、热重载这三组接口。
-- **`README-zh.md` 数字口径修正**：AI 分组的大类数公式写的是「技能数 ÷ 8，6~18 组、单组上限 12 个」，而 `lib/groups.js` 实际是 `Math.max(3, Math.min(16, Math.ceil(list.length / 12)))`（技能数 ÷ 12、3~16 个）且 `addSub()` 按 10 个切片、`CLASSIFY_SYSTEM` 要求「每个子类最多 10 个技能」。三处已全部改成 10 / ÷12 / 3~16，第三遍兜底拆组的「超过 12 个」也改为「超过 10 个」。
-- **`package.json` `description` 从「逐版本罗列」改为一份统一功能描述**：原来是把 v1.9.0→v1.9.10 每个版本的新增点串起来，越写越长、且和市场卡片/README 口径各不相同。现在 `package.json` description、`locale/zh.json` `meta.description`、`locale/en.json` `meta.description`、五语言 README 首段**全部指向同一份口径**（含「分组只改视图不动技能文件」「无版本显示暂未编版本号」两条容易被误解的点）。npm 市场的卡片描述取自 `package.json` description，插件管理器/设置页的描述取自 `locale/*.json` 的 `meta`，两边现在一字不差。
-- **`README-es.md` / `README-pt.md` / `README-hi.md` 首段补齐**：原来这三份只有一个 8 行的空壳（只有标题 + 一句旧描述 + 一个跳转链接），连分组、版本号、台账看板、热重载、皮肤自适应都没提。现在各自有一段完整的本地语言功能描述，标题统一为 `Skill Browser`。
-
-### 校验
-- **`scripts/audit-contrast.mjs`（新写，随包发布，唯一权威口径）**：128 皮肤 × 18 组前景/背景组合 = **2304 项，0 项不达标**。与旧临时脚本的差别：
-  - 语义变量直接从真实调用链取 —— 切皮肤后读 `<style id="dsb-skin-style">` 的 `textContent`，不另存一份「期望值」，杜绝审计与实现各算一套的假绿。
-  - 背景一律取**实际叠层色**：`card = chipBg over panel`、`surface = --dsb-surface`（吸顶表头不透明底实算值）。
-  - 渐变底按**两个端点分别校验**：品牌渐变 `--dsb-onbrand-bg1/2`、分组大类行 `--dsb-tile1/2`（叠 `--dsb-shade` 后）。只测中点会漏掉浅端。
-  - 踩过的坑写进脚本注释：DOM stub 的 `localStorage` 必须可读写，否则 `SKIN.setSkin(id)` 记不住，128 款皮肤全按 01 号深色皮肤算 → 20 款浅色皮肤集体假报不达标（首轮就误报 200 项）。
-- `audit_onbrand.mjs`：128 皮肤逐款取 `--dsb-onbrand-bg1/2` 与 `--dsb-onbrand`，两端点对比度 **0 项 < 4.5:1**。
-- `doc_audit2.mjs` / `doc_audit3.mjs` / `route_audit.mjs`：README-zh 16 项功能词全覆盖；README.md 10 项新功能词 + 4 个新路由全在位；实装 17 条路由与文档逐一对应。
-- `scripts/check-bom.mjs`：37 个文本文件 **0 BOM**。
-
-> **口径统一**：此前各版本 CHANGELOG 出现过 `14 组 1792 项`、`17 组 2176 项` 两种数字，那是各阶段临时脚本的覆盖范围（未含吸顶表头底、未拆渐变端点）。自 v1.9.10 起以 `scripts/audit-contrast.mjs` 的 **18 组 2304 项**为准，README-zh / README.md / package.json 描述均已对齐该数字。
-
-## 1.9.9 — 2026-10-25
-
-### 新增
-- **零配置 AI 模型自动发现（四段式）**：别人装完插件不用填任何配置，AI 分组/封面就能用。
-  1. 插件配置里显式写了 `provider` + `model` → 直接用（`source: config`）
-  2. 当前对话会话绑定的模型 → `source: agent-session`
-  3. DSH 设置里的默认模型 `agentDefaultModel.currentSelection()` → `source: dsh-default`
-  4. 兜底扫描宿主可用模型目录，取第一个 → `source: llm-catalog`
-- **模型探针徽标**：分组工具条右侧常驻一个小徽标，一眼看出「AI 分组将使用：xxx（DSH 默认模型）」，点一下可重新探测。探测只读配置、**不触发任何模型调用**、不写 `groups.json`。宿主没提供 llm 服务或没选默认模型时，徽标直接变红并给出可操作提示，不用等真分组失败才发现。
-
-### 修复
-- **全皮肤小字可见性（第三次加固）**：
-  - `.dsb-gn` 数字徽标原来写死近白色 `--dsb-oncard-dim`，但它同时出现在工具条（面板底）、激活渐变按钮、大类行（深底）三种背景上 → 浅色皮肤下白字白底看不见。改为 **继承父级文字色**，三种背景各自正确。
-  - 基础 CSS 里所有 `var(--itm, …)` 文本色统一换成 `var(--dsb-dim, …)`（共 24 处）——皮肤自带的 `--itm` 在 28 款手调皮肤上对面板只有 3.0–4.0:1，达不到 10–11px 小字的 WCAG AA。
-  - 品牌渐变底（激活 chip / tab / 排序按钮 / 快捷区间 / 新建分组 / 子类选中）新增**安全渐变对** `--dsb-onbrand-bg1/2`：按「白字 ≥4.6:1」反解，浅色皮肤的淡渐变自动压深；8 款原本 3.03–3.5:1 的皮肤全部达标。
-  - `--dsb-ok` / `--dsb-fail` / `--dsb-warn` 作为 10–11px 文本时，按卡片底重新走一遍 4.8:1 阶梯（6 款浅色皮肤原本落在 4.35–4.50）。
-
-### 校验
-- 128 皮肤 × 17 组前景/背景组合 = **2176 项，0 项不达标**
-- 语义色小字专项：1024 项，**0 项 < 4.5:1**
-- 十一套回归全绿：DOM 78 / 热重载按钮 10 / 关键词 17 / 吸顶表头 24 / host 分组 36 / host 热重载 29 / 关键词 host 15 / 模型探针 11（均 0 FAIL）
-
-## 1.9.8 — 2026-10-25
-
-### 新增
-- **分组栏树状 / 平铺双模式**：工具条新增「🌳 树状」「▦ 平铺」切换按钮，选择持久化到 `localStorage.dsh-skill-browser-gmode`。
-  - **树状（默认）**：每个大类独占一整行，子类**常驻**缩进挂在该行下方，用 `├─` / `└─` 树枝连接符 + 竖引导线画出真正的层级，一眼看出「Fluent 下面有 画网格 / 后处理 / SpaceClaim 几何操作 …」。不用先点大类才看得见子类。
-  - **平铺**：v1.9.3 原样（大类排成卡片，点开才显示子类栏），保留给习惯旧视图的用户。
-- 分组栏顶部改为统一工具条 `dsb-gbar`：分组标题 · 全部 · 未分组 · 🌳树状 · ▦平铺 · ⚡关键词分组 · 🤖AI自动分组 · ＋新建。
-- 大类行右侧显示「N 项 · N 子类」，鼠标悬停浮出 🎨封面 / ＋新建子类 / ✏️重命名 / 🗑删除 四个操作。
-
-### 修复
-- **「大类下面子类显示不清、零零散散挨着太乱」**：v1.9.3~v1.9.7 的子类行是 `flex-wrap` 横向小胶囊，和大类卡片视觉上分不开。现改为竖排逐行 + 树枝连接符，层级关系一眼可见。
-
-### 变更
-- 文案键新增 `groupModeTree` / `groupModeFlat` / `groupModeTreeTip` / `groupModeFlatTip`。
-- 新增 CSS：`.dsb-gbar` / `.dsb-gsp` / `.dsb-gtree` / `.dsb-gitem` / `.dsb-grow`（大类整宽行）/ `.dsb-gico` / `.dsb-grname` / `.dsb-grmeta` / `.dsb-grops` / `.dsb-gsubrow` / `.dsb-gline` / `.dsb-gline-last` / `.dsb-gconn` / `.dsb-gsub` / `.dsb-gsub-on`；平铺模式类 `.dsb-gflat` / `.dsb-gcard` / `.dsb-gcard-dom` 全部保留。
-- 分组栏容器 `max-height` 提到 `220px` 并可滚动，分组多时不再挤压技能列表。
-
-## 1.9.7 — 2026-10-25
-
-### 新增
-- **关键词快速分组（⚡）**：分组栏新增「⚡ 关键词分组」按钮，纯本地正则规则直接产出「大类 → 子类」两级方案，**零 token、毫秒级（实测 111 个技能 1~2ms）、结果完全确定**，与 AI 分组共用同一个方案确认弹层和落盘路径（先出方案 → 选「替换」或「追加」才写入 `groups.json`）。
-- 新模块 `lib/keyword-groups.js`：`keywordClassify(skills)` 返回 `{ok, plan:{domains}, stats, mode:"keyword", unmatched}`；另有 `keywordDomains()` / `keywordRules()` / `KEYWORD_MAX_SUB` 供自检与展示。
-- 新接口 `POST /dsh-skill-browser/groups` 的 `action: "kw-classify"`（只出方案不落盘，与 `ai-classify` 同形）。
-
-### 修复
-- **AI 分组「太满」**：单子类技能数硬上限 `MAX_SUB = 8`，超过自动拆成「名称 1」「名称 2」…，保证一屏装得下。
-- 关键词分组对模型未命中/漏掉的技能走 `unmatched` 兜底并归入「其他技能」，**实测 111/111 全覆盖、无重复归属**。
-
-### 变更
-- 文案键新增 `groupKw`（「⚡ 关键词分组」）、`groupKwTip`（「本地关键词规则直接分组：零 token、毫秒级、结果固定」）、`groupPlanTitleKw`（「关键词分组方案」）。
-- `lib/client.js` 的 `kwClassifyFlow()` 与 `aiClassifyFlow()` 并列，共用 `openPlanMenu()` / `applyPlanFlow()`；`S.gplanMode` 区分 `"keyword"` / `"ai"` 只影响弹层标题。
-
-## 1.9.6 — 2026-10-25
-
-### 修复
-- **详情页被吸顶表头穿透**：点技能看全文 / 点台账看失败明细时，排行榜的吸顶表头（`z-index:3`）会浮在详情层（`z-index:2`）之上，正文里横插一条「# 技能 / 版本 / 调用 …」的表格头，干扰阅读。详情层提到 `z-index:20`，彻底压住吸顶表头。
-
-### 性能（不卡顿 / 少内存）
-- **技能卡片分片渲染**：列表一次只渲染 60 张卡，滚动到底自动追加 60 张，也可点「加载更多（还有 N 条）」。切换分类/搜索/排序/分组时自动重置回 60。原来 130+ 技能是一次性拼几千个 DOM 节点。
-- **原始流水分片渲染**：自动登记流水一次只渲染 120 行，点「加载更多」追加 120 行。原来 1000+ 行全量拼串。
-- **重渲染保留滚动位置**：追加卡片时记住 `scrollTop`，不会跳回顶部。
-- **jsonl 增量读取**：`lib/ledger-writer.js` 新增 `autoLogStat()`（只 stat 取 size+mtime）与 `readAutoLogTail(root, n, skill?)`（从文件尾部按行切齐读，不读全文）。`/ledger` 的「最近 30 条」改用尾部读，不再为 30 条记录读整个 986+ 行 jsonl。
-- **统计缓存加 stat 探针**：`/ledger/stats` 的缓存键并入 jsonl 的 size+mtime —— 文件没变时切粒度/改排序都直接命中，且同一份 jsonl 只解析一次（原来换任何参数都要重读重解析全量）。
-- **单技能明细分页**：`/ledger-detail` 默认只回最近 200 条（`&limit=` 可调），并额外返回 `autoTotal`；前端显示「共 N 条（仅显示最近 M 条）」。原来单技能上千条一次性塞给前端。
-
-### 新增
-- 文案键 `cardMore`（「加载更多（还有 {n} 条）」）、`detailHint`。
-
-## 1.9.5 — 2026-10-25
-
-### 修复
-
-1. **调用台账排行榜吸顶表头透明，滚动时与行文字重叠** — 表头（`# 技能 / 版本 / 调用 / 成功 / 失败 / 成功率 / 最后调用`）原来 `background:transparent`，吸顶后下方滚动的行会从表头文字里穿过去，看着像字叠字。现改用新增语义变量 **`--dsb-surface`**（= 行/卡片真实渲染的不透明底色，即面板底色叠加 `--chipBg` 后的颜色），并：
-   - `z-index` 2 → **3**
-   - 加底部分隔线 `1px var(--dsb-line)` 与 `box-shadow:0 2px 6px rgba(0,0,0,.10)`，滚动时有明确边界
-   - 深色/浅色皮肤都取各自的不透明底色（实测 28 月白纸墨 `#f1efeb`、08 极地冰川 `#dfebf4`、04 全息幻彩 `#e7e4fe`、10 机械核心 `#252422`、01 曜石极光 `#252a38`），表头文字对比度 5.54–11.45:1
-
-## 1.9.4 — 2026-10-25
-
-### 新增
-
-1. **面板热重载按钮 ⚡** — 面板右上角新增热重载按钮。改完插件代码点一下，host 半当场换新、client 半刷新页面取最新 bundle，**不重启桌面端、不中断会话**。
-   - host 半：`POST /dsh-skill-browser/reload` 用 `?v=<ts>` 重新 import 自身模块（5 个子模块一并换新，绕开 ESM 模块缓存），新的 API 实例接管请求，旧的经 `dispose()` 释放。
-   - 生效句柄挂在 `globalThis.__DSB_LIVE__`（`{api, gen}`），跨模块实例共享；每次重载 `gen` 自增，监听器由旧实例的 dispose 摘掉，不会重复注册。
-   - client 半：调 `ctx.get("clientModules").rebuilt(id)` 让 client-modules 重新从磁盘读 `client.js`，随后 `location.reload()` 取新界面。
-2. **热重载探针 `GET /dsh-skill-browser/rev`** — 返回 `{version, gen}`。面板点完热重载后轮询该接口，确认宿主半真的换代（`gen` 变大）再刷新页面，避免刷到旧代码。
-
-### 修复
-
-1. **分组栏 / 台账看板滚动条不可见** — 面板内滚动容器原来用系统 overlay 滚动条，深色面板上几乎隐形。改为常驻 11px 品牌色滑块（轨道 `--dsb-soft`、滑块 `--dsb-brand`、`min-height:40px`、`scrollbar-width:thin`、`overscroll-behavior:contain`），覆盖技能列表 / 台账表格 / 详情正文 / 分组栏四个容器，浅色深色皮肤都看得见位置。
-2. **悬浮球被面板盖住** — 球 `z-index` 原为 `2147481000`、面板 `2147481100`，面板一开就压住球。现球 `2147483600`、面板 `2147483000`，球恒在面板之上（与 dsh-todo-float-ball / dsh-font-enhancer / dsh-qq-digest 的层级一致）。
-3. **分组栏过高挤占技能列表** — `.dsb-groups` 加 `max-height:96px;overflow-y:auto;overflow-x:hidden`。
-
-## 1.9.3 — 2026-10-25
-
-### 新增
-
-1. **分组升级为「大类 → 子类」两级结构** — 原来的分组是平铺的一层，AI 分完只会得到一堆并列的组。现在支持逻辑上的总-分关系：一个大类（如「Fluent/CFD 仿真」）下可挂多个子类（前处理 / 画网格 / 求解与监测 / 后处理 / 故障排查），「DSH 工具链」下可挂（启动失败 / 插件冲突 / 插件开发 / 安装经验 / 网关配置）。层级上限两层，第三层会被拒绝。
-2. **分组卡显示子类数与大类合计** — 大类卡右上角显示「N 子类」，数量是该大类自身成员 + 全部子类成员的合计；点大类看全部，点下面的子类只看那一个。
-3. **二级子类筛选栏** — 选中某个大类后，分组栏下方出现一条「└ 子类」栏，含「整个大类」+ 每个子类（带计数），点哪个筛哪个。
-4. **大类卡新增「＋」按钮** — 直接在某个大类下新建子类，不必先建组再挪。
-5. **AI 分组改为「先出方案，确认后落盘」** — 原先是点一下直接写库，模型截断或分得不满意只能删了重来。现在 AI 只返回一份「大类 → 子类 → 技能」方案，在弹层里列清楚（共 N 个大类 / M 个子类 / 覆盖 K 个技能），由用户选：
-   - **替换**：清掉旧的 AI 分组，按此方案重建（手工建的分组永远保留）
-   - **追加**：保留现有分组，只补还没归类的技能
-   不确认就不写盘。
-6. **AI 分类提示词按「领域 → 用途」两级重写** — 明确要求大类是领域（Fluent/CFD 仿真、DSH 工具链、软件安装、网关与反代、文档处理…），子类是领域内的具体用途；每个技能恰好归一个子类、一个不漏；单子类 ≤10 个技能；禁止「通用/其他/杂项/综合/工具集」大杂烩筐；不再因为某领域技能多就只细分它。配套三遍覆盖：第一遍全量、第二遍只补模型漏掉的、第三遍按分类标签兜底，保证 100% 覆盖。
-7. **AI 方案生成失败可读** — 模型流被 max-tokens 截断时不再只说「异常结束」，会带上 failure code/message。
-
-### 修复
-
-1. **滚动条看不见、不知道滚到哪** — 面板内所有滚动容器（技能列表、台账表格、详情正文、分组栏）原来用系统 overlay 滚动条，深色面板上几乎隐形。现在统一常驻 11px 滚动条：轨道半透明、滑块用品牌色（`--dsb-brand`）、最小高度 40px、hover 加深，并加 `scrollbar-width:thin` / `overscroll-behavior:contain`。
-2. **悬浮球被面板盖住** — 本插件悬浮球 z-index 是 2147481000，面板是 2147481100，面板一开就压住球；而同类插件（dsh-todo-float-ball、dsh-font-enhancer、dsh-qq-digest）球都在 2147483600 以上。现在球提到 **2147483600**、面板提到 **2147483000**，球恒在面板之上。
-3. **分组栏过高挤占列表** — 分组栏加 `max-height:96px` + 纵向滚动，分组多时不再把技能列表压扁。
-4. **merge 模式误报失败** — 追加模式下如果所有技能都已有归属，原实现返回「方案里的技能都不在当前技能库中」错误。现在按正常结果处理，返回「所有技能都已在分组里，本次没有需要补的技能」。
-
-## 1.9.2 — 2026-10-24
-
-### 修复
-
-1. **台账看板与分组栏对比度** — 1.9.0/1.9.1 新增的 CSS 全是深色硬编码（`#8fc7ff` / `#9ff5c8` / `#8b93a8` / `rgba(255,255,255,.x)`），浅色皮肤（04 全息幻彩、08 极地冰川、28 月白纸墨等）下白字白底、完全看不清。现在全部改为皮肤语义变量 `--dsb-ok` / `--dsb-fail` / `--dsb-warn` / `--dsb-dim` / `--dsb-soft` / `--dsb-line` / `--dsb-bar` 等，深色皮肤用亮色系、浅色皮肤用深色系。
-2. **品牌强调色当正文色导致浅色皮肤看不见** — 卡片技能名、排行榜技能名、排序高亮、分组标签原来直接用皮肤品牌色 `var(--stA)`。08 极地冰川（`#f06a5d` 压 `#eef7fd`）只有 2.80:1、04 全息幻彩（`#e0559f` 压 `#f2f0ff`）只有 2.9:1。新增 `--dsb-brand` / `--dsb-brand-strong`：按「同色相逐级加深」的阶梯算出达标色，既保住品牌色观感又能看清。
-3. **品牌渐变上的标签色** — 激活的 chip / tab / 排序按钮 / 快捷区间 / 新建分组是「品牌渐变 + 白字」，淡渐变上白字同样不可见。新增 `--dsb-onbrand`：按渐变中点亮度自动在白与近黑之间切换。
-4. **趋势柱 / 迷你条不可见** — 柱状图直接用品牌色，浅色皮肤下 08 极地冰川只有 2.80 / 2.79:1。新增 `--dsb-bar1` / `--dsb-bar2`，按 3:1（非文字图形标准）取达标色。
-5. **skinColorLum 支持 hsl() / hsla()** — 100 个派生皮肤的颜色是 hsl() 字符串，原先只解析 #rrggbb，导致亮度判定全部落回默认值、浅色判定失效。补齐 hsl → rgb 换算。
-6. **次要小字改用 --dsb-dim** — 皮肤自带的 --hintC 对面板背景对比度实测仅 3.00~4.02:1（10~11px 小字达不到 WCAG AA 4.5:1），改为按候选链 hintC → itm → ptx → 兜底 取第一个达标的颜色，并按「卡片底」而非面板底核算（小字实际坐在卡片上）。
-7. **开关开启态标签** — `.dsb-tgl-on` / `.dsb-sw-on` 原用皮肤 `--itD`，浅色皮肤同样是亮色，改走 `--dsb-ok`。
-8. **日期选择器配色** — 新增 `--dsb-scheme`（light / dark），原生 `<input type="date">` 的日历弹窗在浅色皮肤下不再弹黑框。
-
-### 变更
-
-1. **分组栏改为紧凑单行卡** — 分组卡高度 56px → 30px，名称与数量同行，🎨/✏️/🗑 操作按钮浮到右上角 hover 才显形；12~18 个分组可一屏排完。
-2. **「全部 / 未分组」改用统一样式的 chip** — 不再用内联渐变 hack，选中态统一走 .dsb-gadd-on。
-
-### 新增
-
-1. **全皮肤对比度自检** — 128 款皮肤 × 14 组前景/背景组合共 1792 项逐一校验（正文 4.5:1、品牌字 4.5:1、次要小字 4.5:1、大数字 3:1、趋势柱 3:1、渐变白字 3:1），当前 **0 项不达标**（20 款浅色皮肤全部通过）。
-
-## 1.9.1 — 2026-10-24
-
-### 重构
-
-1. **失效台账 → 调用台账看板** — 原来的「📋 失效台账」只列人工台账表 + 最近 30 条自动登记流水，看不出调用规模与趋势，改为「📊 调用台账」看板。
-
-### 新增
-
-1. **时间区间筛选** — 7 个快捷区间（今天 / 近 7 天 / 近 30 天 / 本月 / 上月 / 今年 / 全部）+ 自定义起止日期（`<input type="date">`），工具栏右侧实时显示数据的实际覆盖区间。
-2. **日 / 周 / 月 / 年四种粒度** — 趋势与统计按粒度聚合，周以周一为起点，空洞自动补零。
-3. **6 个汇总指标卡** — 调用次数、活跃技能数、活跃天数、成功率、失败次数、日均调用。
-4. **纯 CSS 趋势柱状图** — 按粒度出柱，失败全部命中的柱标红，悬停显示「日期 · 调用 N（成功 X / 失败 Y）」。
-5. **技能调用排行榜** — 列出每个技能的调用次数、成功、失败、成功率、最后调用时间，并带**版本号徽章**（无版本显示「暂未编版本号」）与相对调用量的迷你条；5 个表头可点击切换排序（调用 / 失败 / 成功率 / 最后调用 / 名称）；失败次数 > 0 的技能可点击直接打开该技能的人工台账明细。
-6. **原始流水折叠** — 人工台账表与最近 30 条自动登记流水收进「展开原始流水」开关，默认收起，看板优先。
-7. **新增接口 `GET /dsh-skill-browser/ledger/stats`** — 查询参数 `from` / `to`（YYYY-MM-DD）、`gran`（`day|week|month|year`）、`sort`（`calls|fails|rate|last|name`）、`top`；返回 `totals` / `buckets` / `ranks` / `dataFirst` / `dataLast` / `rankTotal`。带 30 秒缓存。
-8. **新增模块 `lib/ledger-stats.js`** — 纯函数聚合层（无外部依赖）：`dayKeyOf` / `weekStartOf` / `normalizeGran` / `normalizeRecords` / `buildStats`。日期按本地时区取日键，避免 UTC 漂移。
-
-### 变更
-
-1. 台账 tab 文案由「📋 失效台账」改为「📊 调用台账」。
-2. `#dsb-ledger` 由 `display:block` 改为 `display:flex`，内部改为工具栏 / 指标卡 / 趋势 / 排行 / 流水的纵向 flex 布局。
-3. 台账视图打开时若无统计数据会自动拉取一次。
-## 1.9.0 — 2026-10-22
-
-### 新增
-
-1. **技能版本号徽章** — 卡片技能名旁显示 `v<version>` 绿色徽章；版本读取顺序为 `SKILL.md` frontmatter 的 `version` 字段 → 同目录 `package.json` 的 `version` 字段；两者都没有时显示灰色「暂未编版本号」。
-2. **自定义视图分组（手动建组）** — 面板新增「我的分组」横向栏，可手动新建分组（名称 + emoji + 颜色），并支持重命名与删除。分组数据存于 `~/.dsh/data/dsh-skill-browser/groups.json`；**分组只是视图归档，绝不移动或修改任何技能文件在磁盘上的位置**。
-3. **一键把技能移入分组** — 每张技能卡片底部新增「📁 移动」按钮，点开浮层选择目标分组即可归档；卡片上同时显示当前所属分组标签，也可选择「移出分组」。
-4. **AI 自动分类建组** — 分组栏新增「🤖 AI 自动分组」按钮，调用 DSH 宿主 llm 服务读取技能库清单（目录名 + 中文简介 + 描述），让模型输出分组方案（每组含名称、emoji、成员技能列表），一次性建好分组并完成成员归档；**只重建 AI 建的组，保留用户手工建的组**。
-5. **AI 一键生成分组封面** — 每个分组卡片右上角新增「🎨」按钮，调用 llm 生成一段纯 SVG（200x200，深色渐变 + 几何装饰 + 居中符号，无文字），经安全清洗（剥 `<script>`、`on*=` 事件属性、外部 href，上限 40KB）后存入 `groups.json` 作为分组卡片背景图。
-6. **新增 HTTP 接口** — `GET /dsh-skill-browser/groups`（列出分组 + 技能归属映射）；`POST /dsh-skill-browser/groups`（action = `create` / `rename` / `delete` / `assign` / `assign-batch` / `ai-classify` / `ai-cover`）。
-7. **新增模块 `lib/groups.js`** — 承载分组存储与两个 AI 能力（自动分类建组、分组封面生成）。
-
-### 变更
-
-1. **宿主注入扩展** — `inject` 从 `["webServer"]` 扩展为 `["webServer", "llm"]`。
-2. **新增可选依赖声明** — `@deepseek-ai/dsh-llm` 声明为 `optional peerDependency`：不安装也能正常使用，只是两个 AI 按钮会提示「AI 不可用」。
-
-## 1.8.7 — 2026-10-19
-
-### 文档与代码对齐（无功能改动）
-
-按源码逐项取证后修正 7 处文档不符：
-
-1. **README:13** — 把「搜索框 + 「全部技能 / 停用」开关」改为「全部技能」**聚合启停滑块**（一键全启用/全停用，或点开批量选择）。代码里没有名为「停用」的筛选控件。
-2. **README 功能列表** — 补齐 v1.7.0～v1.7.2 整代核心功能「技能启停」：单卡开关 / 分类级聚合滑块 / 全库批量；停用即改写 `SKILL.md` frontmatter 的 `disable-model-invocation`（`scan.js:17,123,163,199`），自动备份 `.bak-toggle`，灰显+徽章（`client.js:129-149`）。中英双语都补。
-3. **README:28 / :47** — 「16 个一级分类」→ **15**（`lib/zh.js` 的 `CATS.length` 实跑为 15，含 other 兜底）。
-4. **README:37** — 推荐位由 2 个补为面板 **3 张**卡（多 `dsh-todo-float-ball`，`client.js:699-712`）、DSH 设置页 **4 条**（`client.js:1935-1948`）。原文「设置页不再显示推荐」也不成立，已改。
-5. **README:38** — 设置页「悬浮球导航」由 2 个开关补为 **3 个**（新增 `📋 Todo 悬浮球`，`client.js:1882`）。
-6. **README API 表** — 9 条补为 **14 条**：新增 `POST /toggle`（`index.js:450`）、`POST /toggle-batch`（`:456`）、`GET|POST /diag`（`:518`）、`GET /orb/<orb-*.html>`（`:366-367`）。
-7. **locale/zh.json + en.json** — 删掉无实现的「快速路由 / quick routing」虚标；描述改为覆盖真实功能（悬浮球面板、一级/二级分类、技能启停、失效台账、技能库位置可配置、一键复位悬浮球）。
-
-## 1.8.6 — 2026-10-14
-
-### 合规性改进（无功能改动）
-
-本次为**纯元数据与文档改动，未触碰任何运行代码**（`lib/*.js` 与上一版逐字节一致）：
-
-- **包元数据**：`engines.node` 对齐 DSH 运行时（`^22.19.0 || >=24.0.0`）；补 `packageManager`；`files` 白名单补上裸目录 `lib`、`locale/*.json`、`icon.svg` 与多语言 README；`exports` 补 `./locale/*.json` 与 `./icon`。
-- **交付元数据**（官方插件契约要求）：新增 `locale/en.json` 与 `locale/zh.json`（含 `meta.title` / `meta.description`），新增 `icon.svg`（插件管理器显示用图标，不再显示裸 id）。
-- **多语言文档**：新增 `README-zh.md` 中文说明；`README-es/pt/hi.md` 标题与主 README 对齐。
-
-以上改动使插件通过官方 `dsh-plugin-dev check` 全部检查项（`P=12 F=0 W=0`）。
-
-### Compliance improvements (no functional changes)
-
-This release is **metadata and documentation only — no runtime code was touched** (`lib/*.js` is byte-identical to the previous version):
-
-- **Package metadata**: `engines.node` aligned with the DSH runtime (`^22.19.0 || >=24.0.0`); `packageManager` added; `files` allowlist now includes the bare `lib` directory, `locale/*.json`, `icon.svg` and the multi-language READMEs; `exports` gained `./locale/*.json` and `./icon`.
-- **Display metadata** (required by the official plugin contract): added `locale/en.json` and `locale/zh.json` with `meta.title` / `meta.description`, plus `icon.svg` so the plugin manager shows a real name and icon instead of a bare id.
-- **Multi-language docs**: added `README-zh.md`; `README-es/pt/hi.md` headings aligned with the main README.
-
-With these changes the packages pass every official `dsh-plugin-dev check` item (`P=12 F=0 W=0`).
-
----
-
-## 1.8.5 - 补齐 npm 包元数据（repository / homepage）
-
-本版无功能变更，仅修正包元数据——它直接决定插件市场能否采集到本插件的下载量。
-
-- **补 `repository` 字段**：此前 `package.json` 缺 `repository`，导致上游
-  awesome-dsh-plugin 的 `scripts/probe-npm.mjs` 在「npm 包是否属于该仓库」这一步
-  判定失败（该脚本读取 registry 里 `latest` 版本的 `repository`，要求包含对应
-  GitHub 仓库路径），于是 `data/npm-map.json` 不收录本条目、`downloads` 在
-  `plugins.json` 里落成 `null`。
-- **症状**：插件市场列表与详情页**不显示下载量数字**（看起来像"一个下载都没有"），
-  实际 npm 近30天有 1700+ 次下载；同时收录条目会降级为 `github:` 安装方式、
-  不展示 npm 版本号。
-- **补 `homepage` 字段**：指向仓库 README，用于 npm 页面与市场条目的主页链接。
-- **`files` 白名单补 `CHANGELOG.md`**：此前变更日志未入 npm 包。
-
-## 1.8.4 - 官方 DSH 兼容声明与引擎版本口径修正
-
-依照 DeepSeek Harness **官方规范**（`packages/boot/app-boot/README.md`）修正兼容性声明。
-
-- **新增官方 DSH 兼容声明**：内核检查的是 `peerDependencies` 中的
-  `@deepseek-ai/dsh` / `@deepseek-ai/dsh-*` 范围，**不读取 `engines.dsh`**。
-  现已在 `peerDependencies` 与 `devDependencies` 同范围声明：
-  `@deepseek-ai/cordis` `^4.0.2`、`@deepseek-ai/dsh` `>=0.1.7-rc.1`。
-- **引擎口径修正为内核版本**：此前 `engines` 只写 `node`，未声明 DSH 内核要求；
-  现补 `engines.dsh = >=0.1.7-rc.1`（内核版本口径，非客户端/外壳版本）。
-- 说明：`^0.1.7` **不匹配**预发布内核 `0.1.7-rc.2`，故范围使用显式预发布下限。
-
-无功能变更。
-
-
-## 1.5.6 (2026-09-07)
-- 默认位改为与字体悬浮球右下角水平并列（right:74px bottom:18px），迁移 v4 自动复位
-- 设置分区推荐插件位回归（照片显示器/字体插件 + Star）
-- 🎯 一键恢复升级为探测式双球联动：检测到字体插件已运行才挂载字体球复位，按钮文案动态显示「双球」
-
-## 1.5.5 (2026-09-06)
-- 版本号对齐修复：host 端 VERSION 常量此前停在 1.5.1，现统一
-
-## 1.5.5 (2026-09-06)
-- 版本号对齐修复：host 端 `lib/index.js` 的 VERSION 常量此前停在 1.5.1，未随 1.5.2~1.5.4 同步，`/health` 误报 1.5.1；现统一为 1.5.5
-
-## 1.5.4 (2026-09-05)
-- 移除技能列表每页末尾追加的「💡 悬浮球显隐设置」提示卡；技能列表只展示技能卡片本身
-
-## 1.5.3 (2026-09-05)
-- DSH 设置页「悬浮球导航」新增「🎯 一键恢复悬浮球默认位置（右下角）」按钮：悬浮球被拖出屏幕外卡住时，点击立即清除位置记忆 / 恢复显示 / 解除收起状态，无需重启
-- 推荐插件位收敛：技能列表每页末尾与 DSH 设置页不再显示推荐广告卡，仅保留面板 ⚙ 设置展开区（技能库位置下方）一处
-
-## 1.5.2 (2026-09-05)
-- 复位迁移升级到 v3：客户端加载时自动恢复悬浮球显示、清除收起小圆点与拖拽位置记忆（针对"球找不到"的自救机制）
-
-## 1.5.1 (2026-09-04)
-- **台账搜索制**：初始化时全库搜索台账文件（文件名含「失效台账 / 失败台账 / 生效-失效」等，约定路径 `skill-master/references/` 优先）；搜到则复用（人工内容不动、首接管备份），没搜到才创建默认台账
-- **默认台账模板**：对齐现行台账格式（〇铁律 / 一登记时机 / 二登记口令 / 三统计表 / 四失败明细 + 🤖 自动登记区块），表头与解析器严格兼容，零隐私内容
-- **登记口令**：对话里说「触发失败，登记」/「登记失败：技能名 原因」→ AI 调上报接口写入台账；面板人工台账空态显示口令引导
-- **文件夹选择器修复**：改由宿主端 spawn PowerShell 弹 Windows 原生 FolderBrowserDialog（`POST /pick-dir`），路径 100% 准确；renderer 侧 File API 方案（webkitdirectory）在 Electron 32+ 不可靠，已弃用
-- **零机器路径**：插件本体不含任何预设/硬编码技能库路径；解析顺序 = 设置页覆盖 → 环境变量 `DSH_SKILLS_DIR` → 插件 config → `~/.dsh/skills`；未配置时面板引导选择
-- **内置中文简介字典脱敏**：移除全部私有项目与个人技能条目，仅保留通用描述；未收录技能回退 frontmatter description
-- 面板新增推荐插件卡（照片显示器 / 字体插件）与悬浮球显隐引导说明
-- 修复：换根后 ledgerPath 未重置；ledgerEffectivePath 路径拼接错误
-- 测试扩展至 38 项
-
-## 1.4.0 - 1.4.4 (2026-09-04)
-- 初始化检查（空库自动创建 skill-master 技能 + 台账，幂等不覆盖人工内容）
-- 失效台账自动登记引擎（`tools/result` 事件监听 + JSONL 流水 + 标记区块增量写入）
-- 技能库位置可配置（设置页可视化覆盖 / 环境变量 / 官方默认根自动探测）
-- 官方 directoryPicker seam 与 webkitdirectory 选择器尝试（桌面端环境限制，1.5.1 已替换）
-
-## 1.3.0 (2026-09-04)
-- 失效台账自动登记（自动/人工分区显示）、技能库位置配置雏形
-
-## 1.2.0 (2026-09-03)
-- DSH 设置页「悬浮球导航」分区（settings.section）、双悬浮球视觉统一
-
-## 1.1.0 (2026-09-03)
-- 「📋 失效台账」Tab、悬浮球拖拽/收起、面板内设置
-
-## 1.0.0 (2026-09-03)
-- 首版：悬浮球 + 面板（技能浏览/分类/搜索/全文查看）

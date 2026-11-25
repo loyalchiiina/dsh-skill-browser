@@ -1,8 +1,8 @@
 # dsh-skill-browser 🧩 技能浏览器
 
-> **功能描述**：技能与 MCP 浏览器：一个悬浮球四个页面 + 右上角 ? 快速上手帮助入口。技能浏览（系统目录选库、两级分类加自定义分组、树状/平铺、手动/关键词/AI 分组且只发元数据、搜索、单卡或全库启停并自动备份）、调用台账（次数/成功率/趋势/排行）、MCP（真实 loader 配置与 Fiber 状态、工具与调用统计、启停即时跟随/重连/卸载/导出，并扫描未配置服务器做 AI 修复）、市场 · MCP 市场（官方 Registry + 29 条精选免费目录、19 大类平铺分类、网格/列表双模式、一键安装/卸载、仅免费筛选，与 MCP 页双向即时同步）、右上角 ? 快速上手（9 步，点击展开/再点收起）；面板重绘不跳顶且关闭后记住上次滚动位置，卡片每行列数技能 3~6、MCP 3~5、市场 3~6。130 款皮肤在三颗悬浮球间同步。适配 DSH 内核 0.2.2-rc.1。
+> **功能描述**：技能与 MCP 浏览器：一个悬浮球四个页面 + 右上角 ? 快速上手帮助入口。技能浏览（系统目录选库、两级分类加自定义分组、树状/平铺、手动/关键词/AI 分组且只发元数据、搜索、单卡或全库启停并自动备份）、调用台账（次数/成功率/趋势/排行）、会话栏列出已注入 MCP 的彩色胶囊（悬停看详情）、MCP（真实 loader 配置与 Fiber 状态、工具与调用统计、启停即时跟随/重连/卸载/导出，并扫描未配置服务器做 AI 修复）、市场 · MCP 市场（官方 Registry + 29 条精选免费目录、19 大类平铺分类、网格/列表双模式、一键安装/卸载、仅免费筛选，与 MCP 页双向即时同步）、右上角 ? 快速上手（9 步，点击展开/再点收起）；面板重绘不跳顶且关闭后记住上次滚动位置，卡片每行列数技能 3~6、MCP 3~5、市场 3~6。130 款皮肤在三颗悬浮球间同步。适配 DSH 内核 0.2.2-rc.1。
 >
-> **English**: Skills and MCP browser behind one floating ball with four tabs plus a ? help entry at top right: Skills (native folder picker, two-level categories plus custom groups, tree or flat view, manual, keyword and AI grouping on metadata only, search, and per-card or whole-library enable/disable with timestamped backups), Call Ledger (counts, success rate, trend, ranking), MCP (live loader config, real Fiber states, per-server tools and call stats, instant enable/disable follow, reconnect, uninstall, export to mcpServers JSON, plus scan-and-AI-fix for unconfigured servers), Market (MCP market: official Registry plus a curated free catalog, 19 categories in flat mode, grid or list layout, one-click install/uninstall, free-only filter, two-way instant sync with the MCP tab) and a ? Quick Start help entry (9 steps, click to expand and collapse). The panel never jumps back to the top on redraw and restores its scroll position when reopened. 130 skins sync across the three balls. Adapts DSH kernel 0.2.2-rc.1.
+> **English**: Skills and MCP browser behind one floating ball with four tabs plus a ? help entry at top right: Skills (native folder picker, two-level categories plus custom groups, tree or flat view, manual, keyword and AI grouping on metadata only, search, and per-card or whole-library enable/disable with timestamped backups), Call Ledger (counts, success rate, trend, ranking), colored capsules in the session bar for injected MCP servers (hover for details), MCP (live loader config, real Fiber states, per-server tools and call stats, instant enable/disable follow, reconnect, uninstall, export to mcpServers JSON, plus scan-and-AI-fix for unconfigured servers), Market (MCP market: official Registry plus a curated free catalog, 19 categories in flat mode, grid or list layout, one-click install/uninstall, free-only filter, two-way instant sync with the MCP tab) and a ? Quick Start help entry (9 steps, click to expand and collapse). The panel never jumps back to the top on redraw and restores its scroll position when reopened. 130 skins sync across the three balls. Adapts DSH kernel 0.2.2-rc.1.
 
 
 **把技能库变成看得见、搜得到、管得住的资产。**
@@ -19,7 +19,7 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 ![技能与 MCP 浏览器 · 08](docs/images/shot-08.png)
 ![技能与 MCP 浏览器 · 09](docs/images/shot-09.png)
 ![技能与 MCP 浏览器 · 10](docs/images/shot-10.png)
-![技能与 MCP 浏览器 · 11 推荐三兄弟](docs/images/shot-11.png)
+![技能与 MCP 浏览器 · MCP 卡片网格](docs/images/shot-11.jpg)
 ![技能与 MCP 浏览器 · 12 MCP 市场（全部免费 · 19 大类带数量 · 一键安装/卸载）](docs/images/shot-12.png)
 ![技能与 MCP 浏览器 · 13 MCP 管理（十个 MCP · 已连接 8 个 · 191 个工具）](docs/images/shot-13.png)
 
@@ -35,7 +35,7 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 ### Deferred MCP startup (v2.1.0)
 
 - MCP servers listed in the MCP tab are started by a silent launcher (`mcp-launch.exe`, GUI subsystem, no console window) 15s after DSH boots, so multiple MCPs no longer stretch the boot time.
-- Wrapper: `~/.dsh/data/dsh-skill-browser/mcp-defer/mcp-<id>.cmd` (`ping -n 16 127.0.0.1 >nul` = 10s; change the number to tune).
+- Wrapper: `~/.dsh/data/dsh-skill-browser/mcp-defer/mcp-<id>.cmd` (`ping -n 16 127.0.0.1 >nul` = 15s; change the number to tune).
 
 ### 🗂 四个 Tab + 右上角 ? 帮助入口
 
@@ -138,9 +138,9 @@ DeepSeek Harness（DSH）桌面端 / 网页端插件：右下角一个「技」�
 - 🧩 技能球 / 🔤 字体球 / 📋 Todo 球三球**显隐开关**（未安装的自动标注）
 - **悬浮球皮肤下拉**（130 款分组列出）
 - **「回到右下角」金色按钮**：悬浮球被拖出屏幕外卡住时一键复位，无需重启
-- **作者插件 13 款清单**（带累计下载数，可切「累计 / 近 30 天」）：作者套件 / 字体插件 / 技能浏览器 / Todo 进度球 / 模型折叠 / 语音提醒 / 归档收藏 / 图片灯箱 / 文献下载 / 日程日历 / 控制台哨兵 / 浏览器中枢 / 技能守卫
+- **作者插件 17 款清单**（带累计下载数，可切「累计 / 近 30 天」）：作者套件 / 字体插件 / 技能浏览器 / Todo 进度球 / 模型折叠 / 语音提醒 / 归档收藏 / 图片灯箱 / 文献下载 / 日程日历 / 控制台哨兵 / 浏览器中枢 / 侧栏播放器 / 团队编排 / 产物联动 / 视频墙 / 技能守卫
 - **「作者插件」/「插件版本」两块切换**：顶部两个胶囊按钮点一下换一页，两屏都一屏看全，不用往上往下翻；选择记在 `localStorage`，下次打开还在那一页
-- **插件版本 15 行 + 一键检查更新**：标题行直接写「已装 n/15 · 可更新 m」，右侧一个按钮并发 5 路检查全部插件，按钮上实时走「检查中 n/15」；每个插件按「未检查 / 查不到·未装 / 有新版本（↑ 更新）/ 本地版 / 已是最新」五态显示，有更新的分组在切换条上挂红点
+- **插件版本 17 行 + 一键检查更新**：标题行直接写「已装 n/17 · 可更新 m」，右侧一个按钮并发 5 路检查全部插件，按钮上实时走「检查中 n/17」；每个插件按「未检查 / 查不到·未装 / 有新版本（↑ 更新）/ 本地版 / 已是最新」五态显示，有更新的分组在切换条上挂红点
 - **深浅主题自适应**：整套配色接皮肤语义变量（`--dsb-onbrand` / `--ptx` / `--pbd` / `--dsb-dim` 等），130 款皮肤 + 浅色主题下分类 chip 与版本行都清晰可读
 
 ## 安装
